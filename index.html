@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mousikaelektrouniya</title>
+<meta name="description" content="Browser instruments for Tunisian percussion and raï: tap the drums, play the keys, build a song.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Bricolage+Grotesque:wght@600;800&display=swap">
+<style>
+:root {
+  --bg: #e9edf3; --panel: #f8fafc; --ink: #14213d; --muted: #56637a; --line: #c3ccd9;
+  --drum: #c22338; --synth: #1b5fb8;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0f141c; --panel: #171e29; --ink: #e7ecf4; --muted: #8f9bb0; --line: #2c3748; --drum: #ff6d7c; --synth: #74b0ff; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding: 48px max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px));
+}
+main { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(34px, 7vw, 54px); letter-spacing: -0.03em; line-height: 1; margin: 0; }
+.lead { color: var(--muted); font-size: 17px; margin: 10px 0 0; max-width: 58ch; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+a.card {
+  display: flex; flex-direction: column; gap: 8px; padding: 20px; border-radius: 14px;
+  background: var(--panel); border: 1px solid var(--line); color: inherit; text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s;
+}
+a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+a.card:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.card.main { --accent: var(--drum); border-top: 4px solid var(--drum); }
+.card.alt { --accent: var(--synth); }
+.card h2 { font-family: var(--font-display); font-size: 22px; font-weight: 800; margin: 0; }
+.card p { margin: 0; color: var(--muted); }
+.card .go { margin-top: auto; padding-top: 6px; font-weight: 600; color: var(--accent); }
+footer { color: var(--muted); font-size: 13px; }
+footer a { color: inherit; }
+@media (prefers-reduced-motion: reduce) { a.card { transition: none; } a.card:hover { transform: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Mousikaelektrouniya</h1>
+    <p class="lead">Instruments that run in your browser. Nothing to install: open one, press Play, and use your mouse, touchscreen or computer keyboard.</p>
+  </header>
+  <div class="cards">
+    <a class="card main" href="bendir-rai/">
+      <h2>Bendir &amp; Raï</h2>
+      <p>Tunisian percussion, an 80s drum machine and a raï keyboard with lead, chords and bass. Bend notes, use maqam quarter tones, and chain patterns into a song.</p>
+      <span class="go">Open →</span>
+    </a>
+    <a class="card alt" href="sixteen-steps/">
+      <h2>Sixteen Steps</h2>
+      <p>A simple 16-step drum machine and synth with starter beats for house, hip-hop, breakbeat and electro.</p>
+      <span class="go">Open →</span>
+    </a>
+  </div>
+  <footer>
+    Made by Nadhem Khlij · <a href="https://github.com/NadhemKhlij/Mousikaelektrouniya">Source on GitHub</a> (MIT licence) ·
+    Percussion recordings from the Versilian Community Sample Library (public domain); instrument notes from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0).
+  </footer>
+</main>
+</body>
+</html>
