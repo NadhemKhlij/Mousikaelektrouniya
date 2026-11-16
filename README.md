@@ -2,7 +2,7 @@
 
 Two small browser instruments built with the Web Audio API. No build step, no dependencies.
 
-- **`bendir-rai/`** — Tunisian percussion pads (darbuka dum/tak/ka, bendir, tar, shqashiq, tbal, clap) and a raï keyboard with pitch bend, maqam scales, quarter-tone keys, a backing rhythm with tap recording, and a melody loop.
+- **`bendir-rai/`** — Tunisian percussion pads (darbuka dum/tak/ka, bendir, tar, shqashiq, tbal, clap), an 80s-style drum machine (kick, snare, hats), and a raï keyboard with three parts that play together (lead, chords, bass). It has pitch bend, maqam scales, quarter-tone keys and tap recording, plus four patterns you can chain into a song.
 - **`sixteen-steps/`** — the original 16-step drum machine and synth, fully synthesized.
 
 ## Run
