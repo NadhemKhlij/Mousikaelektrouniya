@@ -2,7 +2,7 @@
 
 Two small browser instruments built with the Web Audio API. No build step, no dependencies.
 
-- **`bendir-rai/`** — a darbuka head you play by where you hit it (centre Dum, ring Slap, rims Tak and Ka, hold to roll, soft or hard touch), hand drums (bendir, tar, shqashiq, tbal, clap) and an 80s-style drum machine. A raï keyboard has three parts that play together (lead, chords, bass), with sounds including gasba, oud, zorna and raï lead, plus pitch bend, maqam scales and quarter-tone keys. Four patterns chain into a song.
+- **`bendir-rai/`** — every instrument is played on a screen shaped like the real thing. The percussion: a darbuka (centre Dum, ring Slap, edges Tak and Ka, hold to roll), a bendir with buzzing snares, a tar with jingles, a two-stick tbal, shqashiq castanets, claps and an 80s drum machine, with an optional big-button view and lights that show the next hit. The melodic instruments: a fretless oud neck, flute holes for the gasba and zorna, and piano keys for the raï synths. Three parts (lead, chords, bass) and four patterns chain into a song.
 - **`sixteen-steps/`** — the original 16-step drum machine and synth, fully synthesized.
 
 ## Play online
@@ -25,7 +25,7 @@ Fazzani, Douik, Barwal, Btayhi and Khatm follow published dum/tak transcriptions
 
 ## Sample credits
 
-- Percussion: [Versilian Community Sample Library](https://github.com/sgossner/VCSL) (CC0 / public domain).
+- Percussion: [Versilian Community Sample Library](https://github.com/sgossner/VCSL) (CC0 / public domain): darbuka, frame drums, tambourine, finger cymbals, bass drum and claps.
 - Darbuka slap: [Darbuka App](https://github.com/codewithasfend/Darbuka-App) by asfend (MIT).
 - Instrument notes: FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts).
 - The gasba uses the soundfont's pan-flute recording with added breath. The oud (a plucked-string model) and the drum machine are synthesized in the page.

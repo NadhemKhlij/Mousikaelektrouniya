@@ -26,6 +26,10 @@
   --skin-ink: #3b2f1c;
   --machine: #2a3550;
   --machine-ink: #e7ecf4;
+  --z-center: #e6c48c; --z-ring: #f5e8cd; --z-rimL: #e2b5a0; --z-rimR: #d6c494; --z-rim: #d9c7a4;
+  --metal: #d8dde3; --metal-edge: #8a939e;
+  --wood: #9a6a3c; --wood-hi: #b7834f; --wood-lo: #7c532c; --wood-ink: #fbefdc; --nut: #efe6d2; --string: #ece6d6; --marker: #f6d78b;
+  --cane: #cdb276; --cane-hi: #e6d4a2; --cane-lo: #a88d52; --hole: #3a2c18;
   --on-accent: #ffffff;
   --key-white: #fcfdfe;
   --key-black: #18243a;
@@ -111,41 +115,67 @@ kbd { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--li
 .song-row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: end; }
 
 /* ---------- drum heads + drum machine ---------- */
-.darbuka { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; justify-content: center; }
-.dhead {
-  position: relative; flex: 0 1 340px; width: min(100%, 340px); aspect-ratio: 1; max-width: 100%; border-radius: 50%;
-  border: 12px solid var(--ink); overflow: hidden; cursor: pointer;
-  background: radial-gradient(circle at 50% 50%, var(--skin) 0 55%, var(--skin-edge) 100%);
-  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
+/* percussion simulators */
+.sim-area { display: flex; flex-wrap: wrap; gap: 16px 28px; align-items: center; justify-content: center; }
+.sim { position: relative; flex: 0 1 360px; width: min(100%, 360px); max-width: 100%; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+.sim.drum { aspect-ratio: 1; border-radius: 50%; border: 12px solid var(--ink); overflow: hidden; cursor: pointer; background: var(--z-rim); }
+.sim.drum .zone { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; }
+.sim.drum .half { position: absolute; top: 0; bottom: 0; width: 50%; pointer-events: none; }
+.sim.drum .half.l { left: 0; } .sim.drum .half.r { right: 0; }
+.sim.drum .divide { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--skin-ink); opacity: 0.2; pointer-events: none; }
+.sim.drum .jingle { position: absolute; width: 9%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; border: 3px solid var(--metal-edge); background: var(--metal); pointer-events: none; }
+.zc-center { background: var(--z-center); } .zc-ring { background: var(--z-ring); } .zc-rimL { background: var(--z-rimL); } .zc-rimR { background: var(--z-rimR); }
+.zl {
+  position: absolute; transform: translate(-50%, -50%); pointer-events: none; text-align: center;
+  padding: 4px 11px; border-radius: 999px; background: var(--skin); border: 1px solid var(--skin-edge);
+  font-family: var(--font-display); font-weight: 800; font-size: 17px; color: var(--skin-ink); line-height: 1.15; white-space: nowrap;
+  transition: transform 0.08s ease-out;
 }
-.dhead::before, .dhead::after { content: ""; position: absolute; border-radius: 50%; border: 2px dashed var(--skin-edge); pointer-events: none; }
-.dhead::before { inset: 29%; }
-.dhead::after { inset: 14%; }
-.dhead .zl { position: absolute; transform: translate(-50%, -50%); font-family: var(--font-display); font-weight: 800; color: var(--skin-ink); pointer-events: none; font-size: 18px; }
-.dhead .z-dum { left: 50%; top: 50%; font-size: 26px; }
-.dhead .z-slap { left: 50%; top: 21.5%; }
-.dhead .z-ka { left: 8%; top: 50%; font-size: 15px; }
-.dhead .z-tak { left: 92%; top: 50%; font-size: 15px; }
+.zl small, .bpad small { display: block; font-family: var(--font-mono); font-weight: 500; font-size: 10px; opacity: 0.7; }
+.zl.big { font-size: 24px; }
+.zl.cue, .bpad.cue { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.zl.hit { transform: translate(-50%, -50%) scale(1.18); transition: none; }
 .ripple { position: absolute; width: 70px; height: 70px; margin: -35px 0 0 -35px; border-radius: 50%; border: 4px solid var(--accent); pointer-events: none; animation: ripple 0.45s ease-out forwards; }
 @keyframes ripple { from { transform: scale(0.3); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
-.dside { flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 12px; max-width: 420px; }
-.pads { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-width: 560px; margin: 0 auto; width: 100%; }
-.pads.small { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-.pads.machine { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.pad {
-  aspect-ratio: 1; max-width: 100%; border-radius: 50%; padding: 0;
-  border: 6px solid var(--ink);
-  background: radial-gradient(circle at 50% 42%, var(--skin) 0 46%, var(--skin-edge) 100%);
-  color: var(--skin-ink);
+.sim.bpads { flex-basis: 460px; width: min(100%, 460px); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.bpad {
+  min-height: 104px; border: 2px solid var(--skin-edge); border-radius: 16px; padding: 8px; color: var(--skin-ink);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  font-family: var(--font-display); font-weight: 800; font-size: 22px;
-  touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent;
-  transition: transform 0.09s ease-out, box-shadow 0.25s ease-out;
+  font-family: var(--font-display); font-weight: 800; font-size: 20px; touch-action: none;
+  transition: transform 0.08s ease-out;
 }
-.pad small { font-family: var(--font-mono); font-weight: 500; font-size: 11px; opacity: 0.7; }
-.pads.small .pad { border-width: 4px; font-size: 13px; }
-.pads.machine .pad { aspect-ratio: 2 / 1; border-radius: 10px; border: 0; background: var(--machine); color: var(--machine-ink); font-size: 14px; }
-.pad.hit { transform: scale(0.94); box-shadow: 0 0 0 5px var(--accent); transition: none; }
+.bpad.hit { transform: scale(0.95); transition: none; }
+.sim.bpads.machine .bpad { background: var(--machine); color: var(--machine-ink); border-color: var(--machine); }
+.sim.bpads.machine .bpad.cue { background: var(--accent); color: var(--on-accent); }
+.sim.bpads.one { grid-template-columns: 1fr; }
+.sim-side > .chip { align-self: flex-start; }
+.sim-side { flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 12px; max-width: 420px; }
+
+/* oud neck and flute holes */
+.surface { display: flex; flex-direction: column; gap: 8px; }
+.neck {
+  position: relative; height: 222px; border-radius: 0 10px 10px 0; border-left: 16px solid var(--nut);
+  background: linear-gradient(180deg, var(--wood-hi), var(--wood) 60%, var(--wood-lo));
+  touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer;
+}
+.neck .course { position: absolute; left: 0; right: 0; pointer-events: none; }
+.neck .course::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: var(--th, 2px); margin-top: calc(var(--th, 2px) / -2); background: var(--string); }
+.neck .mk { position: absolute; top: 50%; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--marker); }
+.neck .mk.root { width: 14px; height: 14px; margin: -7px 0 0 -7px; }
+.neck .open { position: absolute; left: -14px; top: 50%; transform: translateY(-50%); width: 12px; text-align: center; font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--hole); }
+.neck .finger { position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; border-radius: 50%; background: var(--accent); opacity: 0.85; pointer-events: none; }
+.neck .finger span { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--wood-ink); white-space: nowrap; }
+.pipe {
+  position: relative; height: 92px; border-radius: 46px 12px 12px 46px;
+  background: linear-gradient(180deg, var(--cane-hi), var(--cane) 55%, var(--cane-lo));
+  display: grid; grid-template-columns: 56px repeat(8, minmax(0, 1fr)) 16px; align-items: center;
+  touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer;
+}
+.pipe .mouth { grid-column: 1; justify-self: center; width: 22px; height: 22px; border-radius: 50%; background: var(--hole); opacity: 0.55; }
+.hole { justify-self: center; width: 44px; height: 44px; max-width: 90%; aspect-ratio: 1; border-radius: 50%; background: var(--hole); display: flex; align-items: center; justify-content: center; color: var(--cane-hi); font-family: var(--font-mono); font-size: 11px; font-weight: 700; pointer-events: none; }
+.hole.down { background: var(--accent); color: var(--on-accent); }
+.pipe-names { display: grid; grid-template-columns: 56px repeat(8, minmax(0, 1fr)) 16px; font-size: 12px; font-weight: 600; color: var(--muted); text-align: center; }
+.pipe-names span:first-child { grid-column: 2; }
 .machine-lbl { text-align: center; }
 
 .transport { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: end; }
@@ -199,10 +229,14 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   .cell { height: 32px; border-radius: 3px; }
   .panel { padding: 12px; }
   #scope { display: none; }
-  .pad { font-size: 18px; border-width: 5px; }
-  .pads.small .pad { font-size: 10px; border-width: 3px; }
-  .pads.machine .pad { font-size: 12px; }
-  .pad small { display: none; }
+  .zl { font-size: 15px; padding: 3px 8px; } .zl.big { font-size: 20px; }
+  .zl small { display: none; }
+  .bpad { min-height: 92px; font-size: 18px; }
+  .neck { height: 240px; }
+  .hole { width: 30px; height: 30px; font-size: 0; }
+  .pipe, .pipe-names { grid-template-columns: 34px repeat(8, minmax(0, 1fr)) 8px; }
+  .pipe .mouth { width: 14px; height: 14px; }
+  .pipe-names { font-size: 10px; }
   .wk, .bk { font-size: 0; }
   .piano { height: 190px; }
   input[type=range] { width: 110px; }
@@ -211,7 +245,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   .track .top-row { flex-direction: column; align-items: stretch; gap: 4px; }
   .track .pick b { font-size: 14px; }
 }
-@media (prefers-reduced-motion: reduce) { .pad { transition: none; } .ripple { animation-duration: 0.01s; } }
+@media (prefers-reduced-motion: reduce) { .zl, .bpad { transition: none; } .ripple { animation-duration: 0.01s; } }
 </style>
 
 <div class="wrap">
@@ -246,20 +280,18 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
 
   <section class="panel drums" aria-label="Percussion">
     <div class="head"><h2>Percussion</h2><span class="lbl" id="drumPatLbl"></span></div>
-    <div class="darbuka">
-      <div class="dhead" id="dhead" role="group" aria-label="Darbuka head. Centre plays Dum, middle ring Slap, left rim Ka, right rim Tak; hold on the rim to roll.">
-        <span class="zl z-dum">Dum</span><span class="zl z-slap">Slap</span><span class="zl z-ka">Ka</span><span class="zl z-tak">Tak</span>
-      </div>
-      <div class="dside">
-        <p class="hint">Play the darbuka like the real drum. Hit the centre for <b>Dum</b>, the middle ring for <b>Slap</b>, the left rim for <b>Ka</b> and the right rim for <b>Tak</b>. Hold a finger on the rim to <b>roll</b>. Use two fingers to play fast patterns.</p>
+    <div class="chips" id="percTabs" role="tablist" aria-label="Instrument"></div>
+    <div class="sim-area">
+      <div class="sim" id="sim" role="group"></div>
+      <div class="sim-side">
+        <p class="hint" id="simHelp"></p>
+        <div class="ctl" id="simViewRow"><span class="lbl">Show it as</span>
+          <div class="chips"><button class="chip" id="viewReal" type="button">The real drum</button><button class="chip" id="viewButtons" type="button">Big buttons</button></div></div>
         <div class="ctl"><label for="touch">How hard you hit: <output id="touchOut">Hard</output></label><input id="touch" type="range" min="10" max="100" step="1"></div>
-        <p class="hint">Soft hits use the drum's quieter recordings, which sound different, not just quieter. Keys: <kbd>B</kbd> Dum, <kbd>N</kbd> Tak, <kbd>M</kbd> Ka, <kbd>V</kbd> Slap, hold <kbd>R</kbd> to roll.</p>
+        <button class="chip" id="guide" type="button" aria-pressed="true">Light up the next hit</button>
+        <p class="hint">With a rhythm playing, the next stroke lights up so you can play along. All drums on a computer: <kbd>B</kbd> <kbd>N</kbd> <kbd>M</kbd> <kbd>V</kbd> and hold <kbd>R</kbd> for the darbuka, <kbd>4</kbd>–<kbd>8</kbd> for the other hand drums, <kbd>9</kbd> <kbd>0</kbd> <kbd>-</kbd> <kbd>=</kbd> for the drum machine.</p>
       </div>
     </div>
-    <div class="pads small" id="padsSmall"></div>
-    <span class="lbl machine-lbl">Drum machine</span>
-    <div class="pads machine" id="padsMachine"></div>
-    <p class="hint">Other drums on a computer: number keys <kbd>4</kbd>–<kbd>8</kbd> for the hand drums and <kbd>9</kbd> <kbd>0</kbd> <kbd>-</kbd> <kbd>=</kbd> for the drum machine.</p>
 
     <div class="transport">
       <div class="ctl">
@@ -294,8 +326,17 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       <label class="lbl" for="bend">Bend</label>
       <input id="bend" type="range" min="-200" max="200" step="1" value="0">
     </div>
-    <div class="piano" id="piano" aria-label="Piano keyboard"></div>
-    <p class="hint">Computer keys: <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> … white keys, <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> black keys, <kbd>Z</kbd> / <kbd>X</kbd> octave. Hold <kbd>←</kbd> <kbd>→</kbd> to bend a semitone, <kbd>↓</kbd> <kbd>↑</kbd> a quarter tone. <kbd>Space</kbd> plays or stops.</p>
+    <div class="ctl"><span class="lbl">Play it on</span><div class="chips" id="surfaces"></div></div>
+    <div class="surface" id="surfPiano"><div class="piano" id="piano" aria-label="Piano keyboard"></div></div>
+    <div class="surface" id="surfOud" hidden>
+      <div class="neck" id="neck" role="group" aria-label="Oud neck: six courses, no frets"></div>
+      <div class="chips"><button class="chip" id="oudSnap" type="button" aria-pressed="true">Snap to the maqam</button><button class="chip" id="oudTrem" type="button" aria-pressed="false">Tremolo picking</button></div>
+    </div>
+    <div class="surface" id="surfPipe" hidden>
+      <div class="pipe" id="pipe" role="group" aria-label="Flute: eight finger holes, low to high"><span class="mouth"></span></div>
+      <div class="pipe-names" id="pipeNames"></div>
+    </div>
+    <p class="hint" id="surfHint"></p>
 
     <div class="knobs">
       <div class="ctl"><label for="root">Key</label><select id="root"></select></div>
@@ -346,12 +387,15 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   var DRUMS = [
     { id: 'dum', name: 'Dum', key: 'B', head: true }, { id: 'tak', name: 'Tak', key: 'N', head: true }, { id: 'ka', name: 'Ka', key: 'M', head: true },
     { id: 'slap', name: 'Slap', key: 'V', head: true }, { id: 'roll', name: 'Roll', key: 'R', head: true },
-    { id: 'bendir', name: 'Bendir', key: '4' }, { id: 'tar', name: 'Tar', key: '5' }, { id: 'shq', name: 'Shqashiq', key: '6' },
-    { id: 'tbal', name: 'Tbal', key: '7' }, { id: 'clap', name: 'Clap', key: '8' },
+    { id: 'bendir', name: 'Bendir', key: '4' }, { id: 'bendirt', name: 'Bendir edge', key: '' },
+    { id: 'tar', name: 'Tar', key: '5' }, { id: 'tarj', name: 'Tar jingles', key: '' },
+    { id: 'shq', name: 'Shqashiq', key: '6' },
+    { id: 'tbal', name: 'Tbal', key: '7' }, { id: 'tbalt', name: 'Tbal thin stick', key: '' },
+    { id: 'clap', name: 'Clap', key: '8' },
     { id: 'kick', name: 'Kick', key: '9', machine: true }, { id: 'snare', name: 'Snare', key: '0', machine: true },
     { id: 'hat', name: 'Hat', key: '-', machine: true }, { id: 'ohat', name: 'Open hat', key: '=', machine: true }
   ];
-  var ALT = { dum: 1, tak: 1, ka: 1, clap: 1 }; // drums with a second recorded take
+  var ALT = { dum: 1, tak: 1, ka: 1, clap: 1, tarj: 1 }; // drums with a second recorded take
   var NOTE_NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
   var SCALES = { hijaz: [0, 1, 4, 5, 7, 8, 10], kurd: [0, 1, 3, 5, 7, 8, 10], nahawand: [0, 2, 3, 5, 7, 8, 10], bayati: [0, 1.5, 3, 5, 7, 8, 10], rast: [0, 2, 3.5, 5, 7, 9, 10.5], ajam: [0, 2, 4, 5, 7, 9, 11] };
 
@@ -396,6 +440,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   }
   var state = {
     bpm: 100, swing: 0, vol: 80, rec: false, mode: 'loop', touch: 85,
+    perc: 'darbuka', percView: 'real', guide: true, surface: 'auto', oudSnap: true, oudTrem: false,
     root: 2, scale: 'nahawand', qt: new Array(12).fill(false),
     levels: {}, tracks: {}, sel: 'lead',
     patterns: [], cur: 0, chain: []
@@ -590,7 +635,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     } else noiseSrc(t, 0.12, 'highpass', id === 'clap' ? 1200 : 6000).connect(decayGain(t, v * 0.5, 0.1));
   }
 
-  var flip = {}, rollLen = 0.12, DARB = { dum: 1, tak: 1, ka: 1, slap: 1 };
+  var flip = {}, rollLen = 0.12;
   function sampleKey(id, soft) {
     if (id === 'dum' && soft) return 'dums';
     if (id === 'tak' && soft) id = 'ka';
@@ -616,9 +661,10 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     }
     var src = ctx.createBufferSource(), g = ctx.createGain();
     src.buffer = b;
-    if (DARB[id]) src.playbackRate.value = 1 + (Math.random() - 0.5) * 0.03; // no two hits exactly alike
+    src.playbackRate.value = (id === 'tbalt' ? 1.25 : 1) + (Math.random() - 0.5) * 0.03; // no two hits exactly alike
     g.gain.value = v * 0.9 * (soft && (id === 'dum' || id === 'tak') ? 1.5 : 1);
     src.connect(g); g.connect(drumBus); src.start(t);
+    if (id === 'bendir' || id === 'bendirt') noiseSrc(t, 0.3, 'bandpass', 420, 1.3).connect(decayGain(t, v * 0.22, id === 'bendir' ? 0.26 : 0.14)); // gut snares buzzing under the skin
   }
 
   // oud: a plucked double string, modelled in the page (Karplus-Strong)
@@ -694,7 +740,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       br.connect(bf); bf.connect(bg); bg.connect(g); br.start(t, Math.random() * 0.5); parts.push(br);
     }
     f.connect(g); g.connect(trackOut[trId]); g.gain.setValueAtTime(0, t);
-    return { g: g, oscs: parts, peak: peak, hz: hz, s: s };
+    return { g: g, oscs: parts, peak: peak, hz: hz, s: s, pitch: pitch, isBuf: isBuf };
   }
   function endVoice(v, t) {
     var r = releaseS(v.s);
@@ -739,11 +785,43 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   function noteOff(midi) {
     delete want[midi];
     var v = held[midi]; if (!v) return; delete held[midi];
+    releaseVoice(v);
+  }
+  function releaseVoice(v) {
     var t = ctx.currentTime;
     if (v.g.gain.cancelAndHoldAtTime) v.g.gain.cancelAndHoldAtTime(t);
     else { var cur = v.g.gain.value; v.g.gain.cancelScheduledValues(t); v.g.gain.setValueAtTime(cur, t); }
     endVoice(v, t);
   }
+  // voices played by dragging (oud neck, flute holes): one per finger, and the pitch follows the finger
+  var sv = {};
+  function svStart(key, midi) {
+    ensureAudio(); svStop(key);
+    var inst = T().inst;
+    function go() {
+      var t = ctx.currentTime, v = makeVoice(state.sel, midi, t, 0, true);
+      v.g.gain.linearRampToValueAtTime(v.peak, t + attackS(v.s));
+      v.midi0 = v.cur = midi; sv[key] = v;
+    }
+    if (inst && inst !== 'oud' && !ready[inst] && !failed[inst]) {
+      sv[key] = { pending: midi };
+      loadPack(inst).then(function () { var p = sv[key]; if (p && p.pending != null) { delete sv[key]; svStart(key, p.pending); } });
+      return;
+    }
+    go();
+  }
+  function svSlide(key, midi, glide) {
+    var v = sv[key]; if (!v) return;
+    if (v.pending != null) { v.pending = midi; return; }
+    if (v.cur === midi) return;
+    v.cur = midi;
+    var now = ctx.currentTime, c = 100 * (midi - v.midi0);
+    v.pitch.forEach(function (p, i) {
+      var b = v.isBuf ? 0 : (i ? 9 : -9);
+      p.cancelScheduledValues(now); p.setValueAtTime(p.value, now); p.linearRampToValueAtTime(b + c, now + Math.max(0.012, glide));
+    });
+  }
+  function svStop(key) { var v = sv[key]; if (!v) return; delete sv[key]; if (v.pending == null) releaseVoice(v); }
 
   // ---------- sequencer ----------
   var playing = false, timer = null, stepIdx = 0, baseTime = 0, queue = [], shown = -1, skip = {};
@@ -794,19 +872,14 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     $('play').textContent = '■ Stop'; $('play').classList.add('playing');
   }
   function stop() {
-    playing = false; clearInterval(timer); queue = []; showStep(-1); markChain(-1);
+    playing = false; clearInterval(timer); queue = []; showStep(-1); markChain(-1); setCues([]);
     $('play').textContent = '▶ Play'; $('play').classList.remove('playing');
   }
   function toggle() { playing ? stop() : start(); }
 
-  // ---------- pads ----------
-  var pads = {}, drumRow = {};
-  function flash(id) {
-    var p = pads[id];
-    if (!p) { headFlash(id); return; }
-    p.classList.add('hit');
-    clearTimeout(p._t); p._t = setTimeout(function () { p.classList.remove('hit'); }, 90);
-  }
+  // ---------- percussion simulators ----------
+  var drumRow = {}, DRUM_BY = {};
+  DRUMS.forEach(function (d) { DRUM_BY[d.id] = d; });
   function touchVel() { return state.touch / 100; }
   function record(id) {
     if (!playing || !state.rec) return;
@@ -821,51 +894,163 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   }
   function tap(id, vel) {
     ensureAudio();
-    hit(id, ctx.currentTime, vel == null ? (pads[id] ? 1 : touchVel()) : vel); flash(id);
+    hit(id, ctx.currentTime, vel == null ? (DRUM_BY[id].machine ? 1 : touchVel()) : vel); flash(id);
     record(id);
   }
 
-  // the darbuka head: where you hit decides the stroke
-  var dhead = $('dhead'), ZONE_POS = { dum: [50, 50], slap: [50, 21.5], ka: [8, 50], tak: [92, 50], roll: [92, 50] };
-  function ripple(x, y) {
-    var r = el('span', 'ripple'); r.style.left = x; r.style.top = y;
-    dhead.appendChild(r); setTimeout(function () { r.remove(); }, 500);
-  }
-  function headFlash(id) { var z = ZONE_POS[id]; if (z) ripple(z[0] + '%', z[1] + '%'); }
-  function zoneAt(e) {
-    var r = dhead.getBoundingClientRect(), b = parseFloat(getComputedStyle(dhead).borderLeftWidth) || 0, R = r.width / 2 - b;
-    var x = (e.clientX - r.left - r.width / 2) / R, y = (e.clientY - r.top - r.height / 2) / R, d = Math.sqrt(x * x + y * y);
-    return { id: d < 0.42 ? 'dum' : d < 0.72 ? 'slap' : x < 0 ? 'ka' : 'tak', px: (e.clientX - r.left - b) + 'px', py: (e.clientY - r.top - b) + 'px' };
-  }
-  var rolls = {}, holdTimers = {};
-  function rollStart(key) {
+  // Each simulator is drawn from its zones. Round drums: zones are rings (r = inner/outer radius, 0 to 1),
+  // optionally split into left (side -1) and right (side 1). Split drums: left and right halves. Pads: big buttons.
+  var SIMS = {
+    darbuka: { name: 'Darbuka', shape: 'round', zones: [
+      { id: 'dum', label: 'Dum', key: 'B', r: [0, 0.45], color: 'center', big: true },
+      { id: 'slap', label: 'Slap', key: 'V', r: [0.45, 0.68], color: 'ring' },
+      { id: 'ka', label: 'Ka', key: 'M', r: [0.68, 1], side: -1, color: 'rimL', hold: 'roll' },
+      { id: 'tak', label: 'Tak', key: 'N', r: [0.68, 1], side: 1, color: 'rimR', hold: 'roll' }],
+      help: 'The darbuka is the goblet drum at the heart of Tunisian and raï rhythms. Hit the middle for the deep <b>Dum</b>, the ring for a <b>Slap</b>, the left edge for <b>Ka</b> and the right edge for <b>Tak</b>. Hold a finger on an edge to <b>roll</b>.' },
+    bendir: { name: 'Bendir', shape: 'round', zones: [
+      { id: 'bendir', label: 'Dum', key: '4', r: [0, 0.62], color: 'center', big: true },
+      { id: 'bendirt', label: 'Tak', sub: 'edge', r: [0.62, 1], color: 'rimR' }],
+      help: 'The bendir is a big frame drum with gut snares stretched under the skin, so every hit buzzes. Hit the middle for the deep <b>Dum</b> and the edge for the sharp <b>Tak</b>.' },
+    tar: { name: 'Tar', shape: 'round', jingles: true, zones: [
+      { id: 'tar', label: 'Skin', key: '5', r: [0, 0.62], color: 'center', big: true },
+      { id: 'tarj', label: 'Jingles', r: [0.62, 1], color: 'ring', hold: 'shake' }],
+      help: 'The tar is a small frame drum with metal jingles in its rim. Tap the <b>skin</b> to hit it and the <b>jingles</b> to shake them. Hold on the jingles to keep shaking.' },
+    tbal: { name: 'Tbal', shape: 'split', zones: [
+      { id: 'tbal', label: 'Big stick', key: '7', side: -1, color: 'center' },
+      { id: 'tbalt', label: 'Thin stick', side: 1, color: 'rimR' }],
+      help: 'The tbal is a large double-sided drum played with two sticks: a heavy curved one on the deep side and a thin one on the other. The left half is the <b>big stick</b>, the right half the <b>thin stick</b>.' },
+    shq: { name: 'Shqashiq', shape: 'pads', zones: [
+      { id: 'shq', label: 'Left hand', key: '6', hand: 0.8, color: 'rimR', hold: 'gallop' },
+      { id: 'shq', label: 'Right hand', hand: 1, color: 'rimR', hold: 'gallop' }],
+      help: 'Shqashiq (krakeb) are pairs of iron castanets, one pair in each hand, used in stambeli. Alternate hands, or hold one down for the galloping pattern.' },
+    clap: { name: 'Clap', shape: 'pads', zones: [{ id: 'clap', label: 'Clap', key: '8', color: 'ring' }],
+      help: 'Hand claps, as in a wedding or a raï chorus.' },
+    machine: { name: 'Drum machine', shape: 'pads', machine: true, zones: [
+      { id: 'kick', label: 'Kick', key: '9' }, { id: 'snare', label: 'Snare', key: '0' }, { id: 'hat', label: 'Hat', key: '-' }, { id: 'ohat', label: 'Open hat', key: '=' }],
+      help: 'An 80s-style drum machine, like the ones that came into raï studios in the early 1980s.' }
+  };
+  function lvl(id) { return Math.pow(state.levels[id] / 100, 2) * 1.2 * touchVel(); }
+  var HOLDS = { // what happens while a finger stays down
+    roll: { every: 65, rec: 'roll', play: function (n) { var side = n % 2 ? 'ka' : 'tak'; playStroke(side, ctx.currentTime, lvl('roll') * (0.5 + Math.random() * 0.15), true); flash(side); } },
+    shake: { every: 115, play: function (n) { playStroke('tarj', ctx.currentTime, lvl('tarj') * (n % 2 ? 0.5 : 0.75), false); flash('tarj'); } },
+    gallop: { every: 100, play: function (n) { playStroke('shq', ctx.currentTime, lvl('shq') * (n % 3 === 0 ? 0.95 : 0.5), false); flash('shq'); } }
+  };
+  var holds = {}, holdTimers = {};
+  function holdStart(key, kind) {
     ensureAudio();
-    if (rolls[key]) return;
-    var n = 0;
-    record('roll');
-    rolls[key] = setInterval(function () {
-      var lv = Math.pow(state.levels.roll / 100, 2) * 1.2 * touchVel(), side = n++ % 2 ? 'ka' : 'tak';
-      playStroke(side, ctx.currentTime, lv * (0.5 + Math.random() * 0.15), true); headFlash(side);
-    }, 65);
+    if (holds[key]) return;
+    var h = HOLDS[kind], n = 0;
+    if (h.rec) record(h.rec);
+    holds[key] = setInterval(function () { h.play(n++); }, h.every);
   }
-  function rollStop(key) { clearInterval(rolls[key]); delete rolls[key]; clearTimeout(holdTimers[key]); delete holdTimers[key]; }
-  dhead.addEventListener('pointerdown', function (e) {
-    e.preventDefault();
-    try { dhead.setPointerCapture(e.pointerId); } catch (x) {}
-    var z = zoneAt(e), vel = e.pointerType !== 'mouse' && e.pressure > 0 && e.pressure !== 0.5 ? 0.3 + 0.7 * e.pressure : touchVel();
-    ensureAudio(); hit(z.id, ctx.currentTime, vel); ripple(z.px, z.py); record(z.id);
-    if (z.id === 'tak' || z.id === 'ka') holdTimers[e.pointerId] = setTimeout(function () { rollStart(e.pointerId); }, 220);
-  });
-  ['pointerup', 'pointercancel'].forEach(function (ev) { dhead.addEventListener(ev, function (e) { rollStop(e.pointerId); }); });
+  function holdStop(key) { clearInterval(holds[key]); delete holds[key]; clearTimeout(holdTimers[key]); delete holdTimers[key]; }
 
-  DRUMS.forEach(function (d, i) {
-    if (d.head) return;
-    var p = el('button', 'pad'); p.type = 'button';
-    p.appendChild(el('span', '', d.name)); p.appendChild(el('small', '', d.key));
-    p.addEventListener('pointerdown', function (e) { e.preventDefault(); tap(d.id); });
-    p.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.repeat) tap(d.id); });
-    (d.machine ? $('padsMachine') : $('padsSmall')).appendChild(p); pads[d.id] = p;
+  var simBox = $('sim'), simEls = {}, cueEls = [];
+  function flash(id) {
+    (simEls[id] || []).forEach(function (e) {
+      e.classList.add('hit'); clearTimeout(e._t); e._t = setTimeout(function () { e.classList.remove('hit'); }, 90);
+    });
+  }
+  function setCues(ids) {
+    cueEls.forEach(function (e) { e.classList.remove('cue'); }); cueEls = [];
+    ids.forEach(function (id) { (simEls[id] || []).forEach(function (e) { e.classList.add('cue'); cueEls.push(e); }); });
+  }
+  function labelEl(z) {
+    var l = el('span', 'zl' + (z.big ? ' big' : ''), z.label);
+    if (z.sub || z.key) l.appendChild(el('small', '', [z.sub, z.key].filter(Boolean).join(' · ')));
+    return l;
+  }
+  function addZoneEl(z, e) { (simEls[z.id] = simEls[z.id] || []).push(e); }
+  function renderSim() {
+    var sim = SIMS[state.perc], buttons = sim.shape === 'pads' || state.percView === 'buttons';
+    holdsClear(); simBox.textContent = ''; simEls = {}; cueEls = [];
+    simBox.setAttribute('aria-label', sim.name);
+    if (buttons) {
+      simBox.className = 'sim bpads' + (sim.machine ? ' machine' : '') + (sim.zones.length === 1 ? ' one' : '');
+      sim.zones.forEach(function (z, i) {
+        var b = el('button', 'bpad zc-' + (z.color || 'center')); b.type = 'button'; b.dataset.zi = i;
+        b.appendChild(el('span', '', z.label));
+        if (z.sub || z.key) b.appendChild(el('small', '', [z.sub, z.key].filter(Boolean).join(' · ')));
+        simBox.appendChild(b); addZoneEl(z, b);
+      });
+    } else {
+      simBox.className = 'sim drum';
+      if (sim.shape === 'split') {
+        sim.zones.forEach(function (z) { var h = el('span', 'half zc-' + z.color + (z.side < 0 ? ' l' : ' r')); simBox.appendChild(h); });
+        simBox.appendChild(el('span', 'divide'));
+      } else {
+        var rim = sim.zones.filter(function (z) { return z.r[1] === 1; });
+        if (rim.length === 2) {
+          rim.forEach(function (z) { simBox.appendChild(el('span', 'half zc-' + z.color + (z.side < 0 ? ' l' : ' r'))); });
+          simBox.appendChild(el('span', 'divide'));
+        } else simBox.appendChild(el('span', 'half l zc-' + rim[0].color)), simBox.appendChild(el('span', 'half r zc-' + rim[0].color));
+        if (sim.jingles) for (var j = 0; j < 10; j++) {
+          var a = j / 10 * Math.PI * 2, jn = el('span', 'jingle');
+          jn.style.left = (50 + Math.cos(a) * 41) + '%'; jn.style.top = (50 + Math.sin(a) * 41) + '%'; simBox.appendChild(jn);
+        }
+        sim.zones.filter(function (z) { return z.r[1] < 1; }).sort(function (a, b) { return b.r[1] - a.r[1]; }).forEach(function (z) {
+          var c = el('span', 'zone zc-' + z.color); c.style.width = c.style.height = (z.r[1] * 100) + '%'; simBox.appendChild(c);
+        });
+      }
+      sim.zones.forEach(function (z) {
+        var l = labelEl(z), x = 50, y = 50;
+        if (sim.shape === 'split') x = 50 + z.side * 25;
+        else if (z.r[0] > 0) {
+          var m = (z.r[0] + z.r[1]) / 2 * 50;
+          if (z.side) x = 50 + z.side * m; else y = 50 - m;
+        }
+        l.style.left = x + '%'; l.style.top = y + '%';
+        simBox.appendChild(l); addZoneEl(z, l);
+      });
+    }
+    $('simHelp').innerHTML = sim.help; // our own text, defined above
+    $('simViewRow').hidden = sim.shape === 'pads';
+    $('viewReal').classList.toggle('sel', state.percView !== 'buttons'); $('viewButtons').classList.toggle('sel', state.percView === 'buttons');
+    Array.prototype.forEach.call($('percTabs').children, function (b) { var on = b.dataset.sim === state.perc; b.classList.toggle('sel', on); b.setAttribute('aria-selected', on); });
+  }
+  function zoneAt(sim, e) {
+    var r = simBox.getBoundingClientRect(), b = parseFloat(getComputedStyle(simBox).borderLeftWidth) || 0, R = r.width / 2 - b;
+    var x = (e.clientX - r.left - r.width / 2) / R, y = (e.clientY - r.top - r.height / 2) / R, d = Math.sqrt(x * x + y * y), side = x < 0 ? -1 : 1;
+    if (d > 1.1) return null;
+    for (var i = 0; i < sim.zones.length; i++) {
+      var z = sim.zones[i];
+      if (sim.shape === 'split') { if (z.side === side) return z; continue; }
+      if (d >= z.r[0] && (d < z.r[1] || z.r[1] === 1) && (!z.side || z.side === side)) return z;
+    }
+    return null;
+  }
+  function ripple(x, y) { var rp = el('span', 'ripple'); rp.style.left = x + 'px'; rp.style.top = y + 'px'; simBox.appendChild(rp); setTimeout(function () { rp.remove(); }, 500); }
+  function strike(z, e, key) {
+    var sim = SIMS[state.perc];
+    var vel = sim.machine ? 1 : (e && e.pointerType !== 'mouse' && e.pressure > 0 && e.pressure !== 0.5 ? 0.3 + 0.7 * e.pressure : touchVel()) * (z.hand || 1);
+    tap(z.id, vel);
+    if (z.hold && e) holdTimers[key] = setTimeout(function () { holdStart(key, z.hold); }, 220); // only a finger or mouse can hold
+  }
+  simBox.addEventListener('pointerdown', function (e) {
+    var sim = SIMS[state.perc], z, b = e.target.closest && e.target.closest('.bpad');
+    if (simBox.classList.contains('bpads')) { if (!b) return; z = sim.zones[+b.dataset.zi]; }
+    else z = zoneAt(sim, e);
+    if (!z) return;
+    e.preventDefault();
+    try { simBox.setPointerCapture(e.pointerId); } catch (x) {}
+    strike(z, e, e.pointerId);
+    if (!b) { var r = simBox.getBoundingClientRect(), bw = parseFloat(getComputedStyle(simBox).borderLeftWidth) || 0; ripple(e.clientX - r.left - bw, e.clientY - r.top - bw); }
   });
+  ['pointerup', 'pointercancel'].forEach(function (ev) { simBox.addEventListener(ev, function (e) { holdStop(e.pointerId); }); });
+  simBox.addEventListener('keydown', function (e) {
+    var b = e.target.closest && e.target.closest('.bpad');
+    if (!b || e.repeat || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault(); e.stopPropagation(); strike(SIMS[state.perc].zones[+b.dataset.zi], null, 'kb');
+  });
+  function holdsClear() { Object.keys(holds).concat(Object.keys(holdTimers)).forEach(holdStop); }
+  Object.keys(SIMS).forEach(function (k) {
+    var b = el('button', 'chip', SIMS[k].name); b.type = 'button'; b.dataset.sim = k; b.setAttribute('role', 'tab');
+    b.addEventListener('click', function () { state.perc = k; renderSim(); save(); });
+    $('percTabs').appendChild(b);
+  });
+  $('viewReal').addEventListener('click', function () { state.percView = 'real'; renderSim(); save(); });
+  $('viewButtons').addEventListener('click', function () { state.percView = 'buttons'; renderSim(); save(); });
+  $('guide').addEventListener('click', function () { state.guide = !state.guide; if (!state.guide) setCues([]); render(true); save(); });
 
   // ---------- step grids ----------
   var cols = []; for (var c = 0; c < STEPS; c++) cols.push([]);
@@ -1078,6 +1263,138 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     if (pianoKeys[off]) pianoKeys[off].classList.remove('down');
   }
   function setOctave(o) { T().octave = Math.max(1, Math.min(6, o)); render(true); save(); }
+
+  // ---------- oud neck and flute holes ----------
+  var SURFACES = { auto: 'Matches the sound', piano: 'Piano keys', oud: 'Oud neck', pipe: 'Flute holes' };
+  function surfaceNow() {
+    if (state.surface !== 'auto') return state.surface;
+    var i = T().inst; return i === 'oud' ? 'oud' : i === 'gasba' || i === 'zorna' ? 'pipe' : 'piano';
+  }
+  Object.keys(SURFACES).forEach(function (k) {
+    var b = el('button', 'chip', SURFACES[k]); b.type = 'button'; b.dataset.surf = k;
+    b.addEventListener('click', function () { state.surface = k; render(true); save(); });
+    $('surfaces').appendChild(b);
+  });
+  var DEGKEYS = { a: 0, s: 1, d: 2, f: 3, g: 4, h: 5, j: 6, k: 7, l: 8, ';': 9 }, degDownKeys = {};
+  function pcName(pc) { return NOTE_NAMES[Math.ceil(pc - 1e-9) % 12] + (pc % 1 ? ' ½♭' : ''); }
+  function degDown(k) {
+    if (degDownKeys[k]) return;
+    degDownKeys[k] = true;
+    var d = DEGKEYS[k], m = degMidi(state.sel, d);
+    if (surfaceNow() === 'oud' && state.oudTrem) tremStart('k' + k, m); else svStart('k' + k, m);
+    if (holes[d]) holes[d].classList.add('down');
+  }
+  function degUp(k) {
+    if (!degDownKeys[k]) return;
+    delete degDownKeys[k]; tremStop('k' + k); svStop('k' + k);
+    var d = DEGKEYS[k]; if (holes[d]) holes[d].classList.remove('down');
+  }
+
+  // Oud: six courses, tuned C F A D G C from low to high (a common Arabic tuning), drawn high string on top.
+  var OUD_OPEN = [36, 41, 45, 50, 55, 60], NECK_SEMIS = 13, neck = $('neck'), neckPtr = {}, neckSig = '';
+  function oudBase() { return (T().octave - 3) * 12; }
+  function maqamOffsets(open) { // positions on one string (in semitones from the nut) that are notes of the maqam
+    var out = [];
+    SCALES[state.scale].forEach(function (d, i) {
+      var pc = (state.root + d) % 12, s = ((pc - open) % 12 + 12) % 12;
+      for (; s <= NECK_SEMIS; s += 12) out.push({ s: s, root: i === 0 });
+    });
+    return out.sort(function (a, b) { return a.s - b.s; });
+  }
+  function buildNeck() {
+    var sig = [state.root, state.scale, T().octave].join();
+    if (sig === neckSig) return; neckSig = sig;
+    neck.textContent = '';
+    OUD_OPEN.slice().reverse().forEach(function (open, row) {
+      var c = el('div', 'course'); c.style.top = (row / 6 * 100) + '%'; c.style.height = (100 / 6) + '%';
+      c.style.setProperty('--th', (1.5 + (5 - row) * 0.45) + 'px');
+      c.appendChild(el('span', 'open', NOTE_NAMES[open % 12].replace('♯', '')));
+      maqamOffsets(open).forEach(function (m) { var k = el('span', 'mk' + (m.root ? ' root' : '')); k.style.left = (m.s / NECK_SEMIS * 100) + '%'; c.appendChild(k); });
+      neck.appendChild(c);
+    });
+  }
+  function neckNote(e, row) {
+    var r = neck.getBoundingClientRect(), b = parseFloat(getComputedStyle(neck).borderLeftWidth) || 0;
+    var x = Math.max(0, Math.min(1, (e.clientX - r.left - b) / (r.width - b))), semis = x * NECK_SEMIS, open = OUD_OPEN[5 - row];
+    if (state.oudSnap) {
+      var best = null; maqamOffsets(open).forEach(function (m) { if (!best || Math.abs(m.s - semis) < Math.abs(best.s - semis)) best = m; });
+      semis = best ? best.s : semis;
+    }
+    return { midi: open + semis + oudBase(), x: semis / NECK_SEMIS * 100, pc: (open + semis) % 12 };
+  }
+  var trem = {};
+  function tremStart(key, midi) {
+    ensureAudio(); tremStop(key);
+    var t = trem[key] = { midi: midi, n: 0 };
+    var pluck = function () { svStart(key, t.midi); };
+    pluck(); t.timer = setInterval(pluck, 95);
+  }
+  function tremStop(key) { if (trem[key]) { clearInterval(trem[key].timer); delete trem[key]; } }
+  neck.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    try { neck.setPointerCapture(e.pointerId); } catch (x) {}
+    var r = neck.getBoundingClientRect(), row = Math.max(0, Math.min(5, Math.floor((e.clientY - r.top) / r.height * 6)));
+    var n = neckNote(e, row), f = el('span', 'finger'); f.appendChild(el('span', '', pcName(n.pc)));
+    f.style.left = 'calc(' + n.x + '% )'; f.style.top = ((row + 0.5) / 6 * 100) + '%';
+    neck.appendChild(f);
+    neckPtr[e.pointerId] = { row: row, f: f, midi: n.midi };
+    if (state.oudTrem) tremStart('n' + e.pointerId, n.midi); else svStart('n' + e.pointerId, n.midi);
+  });
+  neck.addEventListener('pointermove', function (e) {
+    var p = neckPtr[e.pointerId]; if (!p) return;
+    var n = neckNote(e, p.row);
+    if (n.midi === p.midi) return;
+    p.midi = n.midi; p.f.style.left = n.x + '%'; p.f.firstChild.textContent = pcName(n.pc);
+    if (trem['n' + e.pointerId]) trem['n' + e.pointerId].midi = n.midi;
+    svSlide('n' + e.pointerId, n.midi, state.oudSnap ? 0.03 : 0.012); // the finger slides along the string
+  });
+  function neckEnd(e) { var p = neckPtr[e.pointerId]; if (!p) return; delete neckPtr[e.pointerId]; p.f.remove(); tremStop('n' + e.pointerId); svStop('n' + e.pointerId); }
+  neck.addEventListener('pointerup', neckEnd); neck.addEventListener('pointercancel', neckEnd);
+  $('oudSnap').addEventListener('click', function () { state.oudSnap = !state.oudSnap; render(true); save(); });
+  $('oudTrem').addEventListener('click', function () { state.oudTrem = !state.oudTrem; render(true); save(); });
+
+  // Flute (gasba, zorna): eight holes for the eight notes of the maqam, low to high. Slide between holes to glide.
+  var pipe = $('pipe'), holes = [], pipePtr = {};
+  for (var hi = 0; hi < 8; hi++) { var hole = el('span', 'hole', 'ASDFGHJK'[hi]); hole.style.gridColumn = String(hi + 2); pipe.appendChild(hole); holes.push(hole); }
+  function holeAt(e) {
+    var best = -1, dist = 1e9;
+    holes.forEach(function (h, i) { var r = h.getBoundingClientRect(), d = Math.abs(e.clientX - (r.left + r.width / 2)); if (d < dist) { dist = d; best = i; } });
+    return best;
+  }
+  pipe.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    try { pipe.setPointerCapture(e.pointerId); } catch (x) {}
+    var i = holeAt(e); pipePtr[e.pointerId] = i; holes[i].classList.add('down');
+    svStart('p' + e.pointerId, degMidi(state.sel, i));
+  });
+  pipe.addEventListener('pointermove', function (e) {
+    if (!(e.pointerId in pipePtr)) return;
+    var i = holeAt(e), prev = pipePtr[e.pointerId];
+    if (i === prev) return;
+    holes[prev].classList.remove('down'); holes[i].classList.add('down'); pipePtr[e.pointerId] = i;
+    svSlide('p' + e.pointerId, degMidi(state.sel, i), Math.max(0.05, glideS(T())));
+  });
+  function pipeEnd(e) { if (!(e.pointerId in pipePtr)) return; holes[pipePtr[e.pointerId]].classList.remove('down'); delete pipePtr[e.pointerId]; svStop('p' + e.pointerId); }
+  pipe.addEventListener('pointerup', pipeEnd); pipe.addEventListener('pointercancel', pipeEnd);
+  function renderPipeNames() {
+    var box = $('pipeNames'), sc = SCALES[state.scale]; box.textContent = '';
+    for (var i = 0; i < 8; i++) box.appendChild(el('span', '', pcName((state.root + sc[i % 7]) % 12 + 0)));
+  }
+  var SURF_HINT = {
+    piano: 'Computer keys: <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> <kbd>F</kbd> … white keys, <kbd>W</kbd> <kbd>E</kbd> <kbd>T</kbd> <kbd>Y</kbd> <kbd>U</kbd> black keys, <kbd>Z</kbd> / <kbd>X</kbd> octave. Hold <kbd>←</kbd> <kbd>→</kbd> to bend a semitone, <kbd>↓</kbd> <kbd>↑</kbd> a quarter tone. <kbd>Space</kbd> plays or stops.',
+    oud: 'The oud has no frets, so you choose the pitch by where your finger lands. Touch a string to pluck it and slide along it to change the note. The dots mark the notes of the maqam (bigger dots are the key note). With <b>Snap to the maqam</b> on, every touch lands on one of them; turn it off to play freely between them. Keys <kbd>A</kbd> to <kbd>;</kbd> play the maqam notes.',
+    pipe: 'Press a hole to blow that note; holes go from low (left) to high (right) and follow the maqam. Slide your finger to the next hole to glide into it, like a gasba player. Keys <kbd>A</kbd> to <kbd>K</kbd> play the holes; <kbd>Z</kbd> / <kbd>X</kbd> change octave.'
+  };
+  function renderSurface() {
+    var s = surfaceNow();
+    $('surfPiano').hidden = s !== 'piano'; $('surfOud').hidden = s !== 'oud'; $('surfPipe').hidden = s !== 'pipe';
+    $('surfHint').innerHTML = SURF_HINT[s]; // our own text, defined above
+    Array.prototype.forEach.call($('surfaces').children, function (b) { b.classList.toggle('sel', b.dataset.surf === state.surface); });
+    $('oudSnap').classList.toggle('sel', state.oudSnap); $('oudSnap').setAttribute('aria-pressed', state.oudSnap);
+    $('oudTrem').classList.toggle('sel', state.oudTrem); $('oudTrem').setAttribute('aria-pressed', state.oudTrem);
+    if (s === 'oud') buildNeck();
+    if (s === 'pipe') renderPipeNames();
+  }
   narrow.addEventListener('change', buildPiano);
 
   // bend strip and keys
@@ -1088,7 +1405,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   var BEND_KEYS = { ArrowLeft: -100, ArrowRight: 100, ArrowDown: -50, ArrowUp: 50 }, bendKey = null;
 
   var DRUM_KEYS = { '1': 'dum', '2': 'tak', '3': 'ka' };
-  DRUMS.forEach(function (d) { if (d.id !== 'roll') DRUM_KEYS[d.key.toLowerCase()] = d.id; });
+  DRUMS.forEach(function (d) { if (d.key && d.id !== 'roll') DRUM_KEYS[d.key.toLowerCase()] = d.id; });
   function typing(e) { var t = e.target; return t && (t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && t.type !== 'range')); }
   window.addEventListener('keydown', function (e) {
     if (e.ctrlKey || e.metaKey || e.altKey || typing(e)) return;
@@ -1100,18 +1417,20 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var k = e.key.toLowerCase();
     if (k === 'z') setOctave(T().octave - 1);
     else if (k === 'x') setOctave(T().octave + 1);
-    else if (k === 'r') rollStart('key');
+    else if (k === 'r') holdStart('key', 'roll');
     else if (k in DRUM_KEYS) tap(DRUM_KEYS[k]);
+    else if (surfaceNow() !== 'piano') { if (k in DEGKEYS) degDown(k); }
     else if (k in KEYMAP) keyDown(KEYMAP[k]);
   });
   window.addEventListener('keyup', function (e) {
     if (e.code === 'Space' && !typing(e)) { e.preventDefault(); return; }
     if (e.key === bendKey) { bendKey = null; bendHome(); return; }
     var k = e.key.toLowerCase();
-    if (k === 'r') rollStop('key');
+    if (k === 'r') holdStop('key');
+    if (k in DEGKEYS) degUp(k);
     if (k in KEYMAP) keyUp(KEYMAP[k]);
   });
-  window.addEventListener('blur', function () { Object.keys(downOff).forEach(function (o) { keyUp(+o); }); Object.keys(rolls).concat(Object.keys(holdTimers)).forEach(rollStop); bendHome(); });
+  window.addEventListener('blur', function () { Object.keys(downOff).forEach(function (o) { keyUp(+o); }); holdsClear(); Object.keys(sv).forEach(svStop); Object.keys(degDownKeys).forEach(degUp); bendHome(); });
 
   // ---------- controls ----------
   function bind(id, get, set) {
@@ -1151,6 +1470,8 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var L = LETTERS[state.cur], tdef = TRACKS.filter(function (t) { return t.id === state.sel; })[0];
     $('bpmOut').textContent = state.bpm; $('swingOut').textContent = state.swing; $('octOut').textContent = T().octave;
     $('touchOut').textContent = state.touch < 40 ? 'Soft' : state.touch < 55 ? 'Medium' : 'Hard';
+    $('guide').classList.toggle('sel', state.guide); $('guide').setAttribute('aria-pressed', state.guide);
+    renderSurface();
     $('drumPatLbl').textContent = 'Pattern ' + L;
     $('notesSummary').textContent = tdef.name + ' notes in pattern ' + L;
     $('notesHint').textContent = tdef.name + ': ' + tdef.what;
@@ -1185,6 +1506,8 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   }
   buildPiano();
   renderChain();
+  if (!SIMS[state.perc]) state.perc = 'darbuka';
+  renderSim();
   render();
 
   // ---------- playhead, pad flashes, scope ----------
@@ -1195,6 +1518,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       var cur = null;
       while (queue.length && queue[0].time <= ctx.currentTime) {
         var q = queue.shift(); cur = q; q.ids.forEach(flash);
+        if (state.guide) { var qp = state.patterns[q.pat], nx = (q.step + 1) % qp.steps; setCues(DRUMS.filter(function (d) { return qp.drums[d.id][nx]; }).map(function (d) { return d.id; })); }
         if (state.mode === 'song') {
           markChain(q.pos);
           if (q.pat !== state.cur) { state.cur = q.pat; render(); } // follow the song
