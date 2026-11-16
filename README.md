@@ -23,3 +23,7 @@ Fazzani, Douik, Barwal, Btayhi and Khatm follow published dum/tak transcriptions
 
 - Percussion: [Versilian Community Sample Library](https://github.com/sgossner/VCSL) (CC0 / public domain).
 - Instrument notes: FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts).
+
+## Licence
+
+The code is released under the [MIT licence](LICENSE). The recordings keep their own terms, listed under Sample credits.
