@@ -19,6 +19,25 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000/bendir-rai/> or <http://localhost:8000/sixteen-steps/>.
 
+## Instrument pages
+
+Each instrument also has its own page, with a short introduction and a rhythm to play along with:
+[darbuka](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#darbuka),
+[bendir](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#bendir),
+[tar](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#tar),
+[tbal](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#tbal),
+[shqashiq](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#shqashiq),
+[drum machine](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#drum-machine),
+[oud](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#oud),
+[gasba](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#gasba),
+[zorna](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#zorna) and the
+[raï keyboard](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#keyboard).
+Practising on these pages never changes your song in the studio.
+
+## The oud
+
+No openly licensed oud recordings were available, so the oud is a physical model of a plucked double string with a deep wooden body. Its settings were tuned by measuring real oud recordings (how fast each note fades, how bright it is, where the body resonates) and matching the model to them. The recordings were used only as a reference and are not part of this project.
+
 ## Rhythms
 
 Fazzani, Douik, Barwal, Btayhi and Khatm follow published dum/tak transcriptions; Stambeli and Raï are sketches. Correct them by ear, or record your own with **Record my taps**.

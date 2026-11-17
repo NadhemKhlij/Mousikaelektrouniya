@@ -58,6 +58,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   background: var(--bg); color: var(--ink);
   font-family: var(--font-body); font-size: 14px; line-height: 1.45;
@@ -149,6 +150,20 @@ kbd { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--li
 .sim.bpads.machine .bpad.cue { background: var(--accent); color: var(--on-accent); }
 .sim.bpads.one { grid-template-columns: 1fr; }
 .sim-side > .chip { align-self: flex-start; }
+.inst-nav { display: flex; flex-direction: column; gap: 6px; }
+.inst-nav .chip { text-decoration: none; color: inherit; }
+.inst-nav .chip.sel { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.panel.focus { --accent: var(--ink); gap: 10px; }
+.panel.focus h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(30px, 6vw, 44px); letter-spacing: -0.02em; line-height: 1.05; margin: 0; }
+.panel.focus .about { margin: 0; color: var(--muted); font-size: 15px; max-width: 62ch; }
+.panel.focus .back { color: var(--muted); font-size: 13px; font-weight: 600; text-decoration: none; }
+.panel.focus .back:hover { color: var(--ink); text-decoration: underline; }
+body.page .panel.song, body.page #percTabs, body.page .transport, body.page #recHint, body.page #patDetails,
+body.page #tracks, body.page #tracksHint, body.page #notesDetails, body.page #surfRow, body.page.page-perc #synthPanel,
+body.page.page-mel #drumsPanel, body.page.page-mel:not(.page-sounds) #soundRow, body.page #drumPatLbl { display: none; }
+body.page .sim { flex-basis: 440px; width: min(100%, 440px); }
+body.page .sim.bpads { flex-basis: 560px; width: min(100%, 560px); }
+body.page .panel.drums .head h2, body.page .panel.synth .head h2 { display: none; }
 .sim-side { flex: 1 1 240px; min-width: 0; display: flex; flex-direction: column; gap: 12px; max-width: 420px; }
 
 /* oud neck and flute holes */
@@ -258,6 +273,22 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     <div class="ctl"><label for="vol">Volume</label><input id="vol" type="range" min="0" max="100" step="1"></div>
   </header>
 
+  <nav class="inst-nav" aria-label="Instruments">
+    <span class="lbl">Play one instrument</span>
+    <div class="chips" id="instNav"></div>
+  </nav>
+
+  <section class="panel focus" id="focus" aria-labelledby="fName" hidden>
+    <a class="back" href="#">← Back to the studio</a>
+    <h2 id="fName"></h2>
+    <p class="about" id="fAbout"></p>
+    <div class="song-row">
+      <button class="play" id="fPlay" type="button">▶ Play a rhythm</button>
+      <div class="ctl"><label for="fBpm">Tempo <output id="fBpmOut">100</output> BPM</label><input id="fBpm" type="range" min="50" max="180" step="1"></div>
+      <div class="ctl"><span class="lbl">Rhythm to play along with</span><div class="chips" id="fBeats"></div></div>
+    </div>
+  </section>
+
   <section class="panel song" aria-label="Song">
     <div class="head"><h2>Song</h2></div>
     <div class="song-row">
@@ -278,7 +309,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     </div>
   </section>
 
-  <section class="panel drums" aria-label="Percussion">
+  <section class="panel drums" id="drumsPanel" aria-label="Percussion">
     <div class="head"><h2>Percussion</h2><span class="lbl" id="drumPatLbl"></span></div>
     <div class="chips" id="percTabs" role="tablist" aria-label="Instrument"></div>
     <div class="sim-area">
@@ -300,7 +331,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       </div>
       <button class="chip rec" id="rec" type="button" aria-pressed="false">● Record my taps</button>
     </div>
-    <p class="hint">With Record on, every drum you tap while the music plays is added to the pattern that is playing.</p>
+    <p class="hint" id="recHint">With Record on, every drum you tap while the music plays is added to the pattern that is playing.</p>
 
     <details id="patDetails" open>
       <summary>Edit the drums step by step</summary>
@@ -315,18 +346,18 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     </details>
   </section>
 
-  <section class="panel synth" aria-label="Raï keyboard">
+  <section class="panel synth" id="synthPanel" aria-label="Raï keyboard">
     <div class="head"><h2>Raï keyboard</h2></div>
     <div class="tracks" id="tracks"></div>
-    <p class="hint">Three parts play together. Pick one to play it on the keys, change its sound, or write its notes below.</p>
+    <p class="hint" id="tracksHint">Three parts play together. Pick one to play it on the keys, change its sound, or write its notes below.</p>
 
-    <div class="ctl"><span class="lbl" id="soundLbl">Sound</span><div class="chips" id="sounds"></div></div>
+    <div class="ctl" id="soundRow"><span class="lbl" id="soundLbl">Sound</span><div class="chips" id="sounds"></div></div>
 
     <div class="bend">
       <label class="lbl" for="bend">Bend</label>
       <input id="bend" type="range" min="-200" max="200" step="1" value="0">
     </div>
-    <div class="ctl"><span class="lbl">Play it on</span><div class="chips" id="surfaces"></div></div>
+    <div class="ctl" id="surfRow"><span class="lbl">Play it on</span><div class="chips" id="surfaces"></div></div>
     <div class="surface" id="surfPiano"><div class="piano" id="piano" aria-label="Piano keyboard"></div></div>
     <div class="surface" id="surfOud" hidden>
       <div class="neck" id="neck" role="group" aria-label="Oud neck: six courses, no frets"></div>
@@ -350,7 +381,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       <div class="chips" id="qt"></div>
     </div>
 
-    <details open>
+    <details open id="notesDetails">
       <summary id="notesSummary">Notes</summary>
       <div class="inner">
         <div class="head"><span class="lbl" id="notesHint"></span><button class="chip" id="clearNotes" type="button">Clear these notes</button></div>
@@ -403,7 +434,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     'Raï lead':    { inst: 'lead',      cutoff: 92, attack: 1,  release: 16, delay: 26, octave: 4, glide: 28, vibrato: 28 },
     Zorna:         { inst: 'zorna',     cutoff: 96, attack: 1,  release: 10, delay: 10, octave: 4, glide: 22, vibrato: 20 },
     Gasba:         { inst: 'gasba',     cutoff: 94, attack: 6,  release: 18, delay: 22, octave: 4, glide: 34, vibrato: 30, breath: 45 },
-    Oud:           { inst: 'oud',       cutoff: 86, attack: 0,  release: 45, delay: 8,  octave: 3, glide: 0,  vibrato: 0 },
+    Oud:           { inst: 'oud',       cutoff: 100, attack: 0, release: 40, delay: 8,  octave: 3, glide: 0,  vibrato: 0 },
     Accordion:     { inst: 'accordion', cutoff: 96, attack: 2,  release: 14, delay: 8,  octave: 4, glide: 0,  vibrato: 6 },
     'Synth brass': { inst: 'brass',     cutoff: 90, attack: 1,  release: 18, delay: 18, octave: 4, glide: 0,  vibrato: 8 },
     Strings:       { inst: 'strings',   cutoff: 92, attack: 30, release: 55, delay: 15, octave: 3, glide: 0,  vibrato: 10 },
@@ -440,15 +471,42 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   }
   var state = {
     bpm: 100, swing: 0, vol: 80, rec: false, mode: 'loop', touch: 85,
-    perc: 'darbuka', percView: 'real', guide: true, surface: 'auto', oudSnap: true, oudTrem: false,
+    perc: 'darbuka', percView: 'real', guide: true, surface: 'auto', oudSnap: true, oudTrem: false, page: '', practice: null,
     root: 2, scale: 'nahawand', qt: new Array(12).fill(false),
     levels: {}, tracks: {}, sel: 'lead',
     patterns: [], cur: 0, chain: []
   };
   DRUMS.forEach(function (d) { state.levels[d.id] = d.machine ? 70 : 80; });
   TRACKS.forEach(function (t) { state.tracks[t.id] = trackFromSound(t.sound, t.level); });
-  function P() { return state.patterns[state.cur]; }
-  function T() { return state.tracks[state.sel]; }
+  state.tracks.solo = trackFromSound('Raï lead', 75);
+  // On an instrument page you practise over your own rhythm and play your own voice, so the song is never changed.
+  var PAGES = {
+    darbuka: { name: 'Darbuka', kind: 'perc', sim: 'darbuka', beat: 'Raï',
+      about: 'A goblet drum, held under the arm or on the knee. It carries the rhythm in Tunisian and raï music: a deep <b>Dum</b> from the middle of the skin and sharp <b>Tak</b> and <b>Ka</b> strokes from the edge.' },
+    bendir: { name: 'Bendir', kind: 'perc', sim: 'bendir', beat: 'Fazzani',
+      about: 'A large frame drum held upright in one hand. Gut snares stretched under the skin give every stroke its buzz. It is played at Sufi gatherings, festivals and weddings across the Maghreb.' },
+    tar: { name: 'Tar', kind: 'perc', sim: 'tar', beat: 'Douik',
+      about: 'A small frame drum with metal jingles set into its rim, played in Tunisian malouf and popular music. Strike the skin for the beat and shake the jingles in between.' },
+    tbal: { name: 'Tbal', kind: 'perc', sim: 'tbal', beat: 'Barwal',
+      about: 'A big double-sided drum played with two sticks, often outdoors beside the zorna at weddings and festivals. A heavy curved stick gives the deep beat and a thin stick fills the space around it.' },
+    shqashiq: { name: 'Shqashiq', kind: 'perc', sim: 'shq', beat: 'Stambeli',
+      about: 'Large iron castanets, one pair in each hand, also called krakeb. They drive stambeli, the trance music of Tunisia, with a fast galloping clatter.' },
+    'drum-machine': { name: 'Drum machine', kind: 'perc', sim: 'machine', beat: 'Raï 80s machine',
+      about: 'Drum machines and synthesizers came into raï studios in the early 1980s and shaped the sound of pop-raï. Play the kick, snare and hats like a producer from that time.' },
+    oud: { name: 'Oud', kind: 'mel', sound: 'Oud', surface: 'oud', beat: 'Douik',
+      about: 'A short-necked lute with a deep, pear-shaped body and no frets, plucked with a long plectrum. Without frets, the player can land between the notes of a piano, which the maqam needs.' },
+    gasba: { name: 'Gasba', kind: 'mel', sound: 'Gasba', surface: 'pipe', beat: 'Fazzani',
+      about: 'A long flute of cane or metal, blown across its open top end. Its breathy, wandering lines answer the singer in traditional raï and Bedouin music.' },
+    zorna: { name: 'Zorna', kind: 'mel', sound: 'Zorna', surface: 'pipe', beat: 'Barwal',
+      about: 'A loud double-reed pipe, also called zokra in Tunisia. Made to be heard outdoors, it plays with the tbal at weddings and celebrations.' },
+    keyboard: { name: 'Raï keyboard', kind: 'mel', surface: 'piano', sounds: true, beat: 'Raï 80s machine',
+      about: 'From the 1980s, keyboards took the lead in pop-raï: bright synth leads bent like a voice, accordion and brass sounds, and quarter tones from oriental keyboards.' }
+  };
+  function PG() { return PAGES[state.page] || null; }
+  function curTrack() { var g = PG(); return g && g.kind === 'mel' ? 'solo' : state.sel; }
+  function patAt(i) { return i === -1 ? state.practice : state.patterns[i]; }
+  function P() { return state.page ? state.practice : state.patterns[state.cur]; }
+  function T() { return state.tracks[curTrack()]; }
 
   function fill(grid, row, steps) { steps.forEach(function (i) { grid[row][i] = true; }); }
   function range(a, b) { var o = []; for (var i = a; i <= b; i++) o.push(i); return o; }
@@ -494,7 +552,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   var saveTimer, STORE = 'bendir-rai-4';
   function save() {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(function () { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }, 300);
+    saveTimer = setTimeout(function () { try { localStorage.setItem(STORE, JSON.stringify(Object.assign({}, state, { page: '' }))); } catch (e) {} }, 300);
   }
   (function restore() {
     var ok = false;
@@ -511,12 +569,20 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
         });
         TRACKS.forEach(function (t) { if (!s.tracks[t.id]) throw 0; });
         Object.assign(state.levels, s.levels || {}); delete s.levels;
+        delete s.page;
+        if (s.practice) {
+          if (s.practice.steps !== 12 && s.practice.steps !== 16) s.practice = null;
+          else DRUMS.forEach(function (d) { if (!s.practice.drums[d.id]) s.practice.drums[d.id] = new Array(STEPS).fill(false); });
+        }
+        if (s.tracks && !s.tracks.solo) delete s.tracks.solo;
         Object.assign(state, s); state.rec = false; ok = true;
+        if (!state.tracks.solo) state.tracks.solo = trackFromSound('Raï lead', 75);
         if (!state.tracks[state.sel]) state.sel = 'lead';
         state.chain = (state.chain || []).filter(function (i) { return i >= 0 && i < NPAT; });
       }
     } catch (e) {}
     if (!ok) demo();
+    if (!state.practice) state.practice = blankPattern();
   })();
 
   // ---------- audio ----------
@@ -551,7 +617,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   }
   function loadSounds() {
     var need = ['drums'];
-    TRACKS.forEach(function (t) { var i = state.tracks[t.id].inst; if (i && i !== 'oud' && need.indexOf(i) < 0) need.push(i); });
+    TRACKS.concat([{ id: 'solo' }]).forEach(function (t) { var i = state.tracks[t.id].inst; if (i && i !== 'oud' && need.indexOf(i) < 0) need.push(i); });
     return Promise.all(need.map(loadPack));
   }
   function sampleFor(inst, midi) {
@@ -578,7 +644,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var fb = ctx.createGain(); fb.gain.value = 0.35;
     var damp = ctx.createBiquadFilter(); damp.type = 'lowpass'; damp.frequency.value = 3200;
     delayNode.connect(damp); damp.connect(fb); fb.connect(delayNode); damp.connect(master);
-    TRACKS.forEach(function (t) {
+    TRACKS.concat([{ id: 'solo' }]).forEach(function (t) {
       trackOut[t.id] = ctx.createGain(); trackOut[t.id].connect(synthBus);
       trackSend[t.id] = ctx.createGain(); trackOut[t.id].connect(trackSend[t.id]); trackSend[t.id].connect(delayNode);
     });
@@ -596,7 +662,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     if (!ctx) return;
     var t = ctx.currentTime;
     master.gain.setTargetAtTime(Math.pow(state.vol / 100, 2) * 0.9, t, 0.02);
-    TRACKS.forEach(function (tr) {
+    TRACKS.concat([{ id: 'solo' }]).forEach(function (tr) {
       var s = state.tracks[tr.id];
       trackOut[tr.id].gain.setTargetAtTime(s.mute ? 0 : Math.pow(s.level / 100, 2), t, 0.02);
       trackSend[tr.id].gain.setTargetAtTime(s.delay / 100 * 0.7, t, 0.02);
@@ -667,27 +733,43 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     if (id === 'bendir' || id === 'bendirt') noiseSrc(t, 0.3, 'bandpass', 420, 1.3).connect(decayGain(t, v * 0.22, id === 'bendir' ? 0.26 : 0.14)); // gut snares buzzing under the skin
   }
 
-  // oud: a plucked double string, modelled in the page (Karplus-Strong)
+  // Oud model, tuned against measurements of real oud recordings (decay, brightness, body resonance).
+  function makeOud(midi, sr, rand) {
+    rand = rand || Math.random;
+    var f = 440 * Math.pow(2, (midi - 69) / 12), len = Math.floor(sr * 2.2), out = new Float32Array(len);
+    var S = 0.15, A = 0.2, PICK = 0.2, DBS = 30;
+    [[1, 0, 1], [Math.pow(2, 7 / 1200), Math.floor(sr * 0.006), 0.9]].forEach(function (c) { // a course: two strings, 7 cents and 6 ms apart
+      var fr = f * c[0], per = sr / fr, D = per - S, g = Math.pow(10, -DBS / 20 / fr), y = new Float32Array(len);
+      var exLen = Math.max(2, Math.round(per)), pick = Math.max(1, Math.round(per * PICK)), e = new Float32Array(exLen), lp = 0, n;
+      for (n = 0; n < exLen; n++) { lp = (1 - A) * (rand() * 2 - 1) + A * lp; e[n] = lp; }
+      var rd = function (x) { if (x < 0) return 0; var i0 = Math.floor(x), a = x - i0; return y[i0] * (1 - a) + (i0 + 1 < len ? y[i0 + 1] : 0) * a; };
+      for (n = 0; n < len; n++) {
+        var ex = n < exLen ? e[n] - (n >= pick ? e[n - pick] : 0) : 0;
+        y[n] = ex + g * ((1 - S) * rd(n - D) + S * rd(n - D - 1));
+        if (n + c[1] < len) out[n + c[1]] += y[n] * c[2];
+      }
+    });
+    var biq = function (b0, b1, b2, a0, a1, a2) {
+      var x1 = 0, x2 = 0, y1 = 0, y2 = 0; b0 /= a0; b1 /= a0; b2 /= a0; a1 /= a0; a2 /= a0;
+      for (var i = 0; i < len; i++) { var x = out[i], v = b0 * x + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2; x2 = x1; x1 = x; y2 = y1; y1 = v; out[i] = v; }
+    };
+    var w = 2 * Math.PI * 110 / sr, Ab = Math.pow(10, 18 / 40), al = Math.sin(w) / (2 * 0.8); // the deep bowl: a strong low resonance
+    biq(1 + al * Ab, -2 * Math.cos(w), 1 - al * Ab, 1 + al / Ab, -2 * Math.cos(w), 1 - al / Ab);
+    var fc = Math.min(4000, Math.max(450, 5 * f)); w = 2 * Math.PI * fc / sr; al = Math.sin(w) / (2 * 0.6); var cw = Math.cos(w); // dark, wooden tone
+    biq((1 - cw) / 2, 1 - cw, (1 - cw) / 2, 1 + al, -2 * cw, 1 - al);
+    var pk = 0, i; for (i = 0; i < Math.floor(sr * 0.05); i++) pk = Math.max(pk, Math.abs(out[i]));
+    var nb = Math.floor(sr * 0.005), lp2 = 0; // the feather plectrum's soft scrape
+    for (i = 0; i < nb; i++) { var z = rand() * 2 - 1; lp2 = 0.25 * z + 0.75 * lp2; out[i] += (z - lp2) * Math.exp(-i / (nb / 3)) * 0.3 * pk; }
+    pk = 0; for (i = 0; i < len; i++) pk = Math.max(pk, Math.abs(out[i]));
+    for (i = 0; i < len; i++) out[i] *= 0.9 / (pk || 1);
+    return out;
+  }
   var oudCache = {};
   function oudBuffer(midi) {
     if (oudCache[midi]) return oudCache[midi];
-    var sr = ctx.sampleRate, f = 440 * Math.pow(2, (midi - 69) / 12), len = Math.floor(sr * 2.6);
-    var buf = ctx.createBuffer(1, len, sr), out = buf.getChannelData(0), t60 = Math.max(0.8, 3.4 - (midi - 40) * 0.055), peak = 0;
-    [1, 1.0028].forEach(function (mul) { // each course has two strings, very slightly apart
-      var fr = f * mul, per = sr / fr, D = per - 0.5, g = Math.pow(10, -3 / (fr * t60)), y = new Float32Array(len);
-      var exLen = Math.max(2, Math.round(per)), pick = Math.max(1, Math.round(per * 0.13)), e = new Float32Array(exLen), lp = 0;
-      for (var n = 0; n < exLen; n++) { lp = 0.35 * lp + 0.65 * (Math.random() * 2 - 1); e[n] = lp; }
-      var read = function (x) { if (x < 0) return 0; var i0 = Math.floor(x), a = x - i0; return y[i0] * (1 - a) + (i0 + 1 < len ? y[i0 + 1] : 0) * a; };
-      for (n = 0; n < len; n++) {
-        var ex = n < exLen ? e[n] - (n >= pick ? e[n - pick] : 0) : 0; // plucked near the bridge
-        y[n] = ex + g * 0.5 * (read(n - D) + read(n - D - 1));
-        out[n] += y[n] * 0.5;
-      }
-    });
-    for (var k = 0; k < len; k++) peak = Math.max(peak, Math.abs(out[k]));
-    for (k = 0; k < len; k++) out[k] *= 0.9 / (peak || 1);
-    oudCache[midi] = buf;
-    return buf;
+    var data = makeOud(midi, ctx.sampleRate), buf = ctx.createBuffer(1, data.length, ctx.sampleRate);
+    buf.getChannelData(0).set(data);
+    return (oudCache[midi] = buf);
   }
 
   var midiHz = function (m) { return 440 * Math.pow(2, (m - 69) / 12); };
@@ -697,12 +779,11 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var smp = s.inst && s.inst !== 'oud' && sampleFor(s.inst, midi), isBuf = !!smp || s.inst === 'oud', parts, pitch = [], peak;
     f.type = 'lowpass';
     if (s.inst === 'oud') {
-      var os = ctx.createBufferSource(), body = ctx.createBiquadFilter();
-      os.buffer = oudBuffer(midi);
+      var os = ctx.createBufferSource();
+      os.buffer = oudBuffer(midi); // the body and the plectrum are part of the model
       if (os.detune) pitch.push(os.detune);
-      body.type = 'peaking'; body.frequency.value = 230; body.Q.value = 1.1; body.gain.value = 5; // the oud's round wooden body
       f.Q.value = 0.7; f.frequency.value = Math.min(18000, cut);
-      os.connect(body); body.connect(f); os.start(t); parts = [os]; peak = 1.3;
+      os.connect(f); os.start(t); parts = [os]; peak = 1.5;
     } else if (smp) {
       var src = ctx.createBufferSource();
       src.buffer = smp.buf; src.playbackRate.value = Math.pow(2, (midi - smp.midi) / 12);
@@ -777,7 +858,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     startNote(midi);
   }
   function startNote(midi) {
-    var t = ctx.currentTime, v = makeVoice(state.sel, midi, t, Object.keys(held).length ? liveHz : 0, true);
+    var t = ctx.currentTime, v = makeVoice(curTrack(), midi, t, Object.keys(held).length ? liveHz : 0, true);
     liveHz = v.hz;
     v.g.gain.linearRampToValueAtTime(v.peak, t + attackS(v.s));
     held[midi] = v;
@@ -799,7 +880,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     ensureAudio(); svStop(key);
     var inst = T().inst;
     function go() {
-      var t = ctx.currentTime, v = makeVoice(state.sel, midi, t, 0, true);
+      var t = ctx.currentTime, v = makeVoice(curTrack(), midi, t, 0, true);
       v.g.gain.linearRampToValueAtTime(v.peak, t + attackS(v.s));
       v.midi0 = v.cur = midi; sv[key] = v;
     }
@@ -828,7 +909,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   var playPat = 0, chainPos = 0, prevHad = {};
   function schedule() {
     while (baseTime < ctx.currentTime + 0.12) {
-      var p = state.patterns[playPat], n = p.steps;
+      var p = patAt(playPat), n = p.steps;
       if (stepIdx >= n) stepIdx = 0;
       var sd = stepDurFor(p), g = n === 12 ? 3 : 4;
       var t = baseTime + (stepIdx % 2 && n === 16 ? state.swing / 100 * sd * 0.66 : 0);
@@ -852,7 +933,8 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       stepIdx++; baseTime += sd;
       if (stepIdx >= n) { // end of the bar: decide what plays next
         stepIdx = 0;
-        if (state.mode === 'song' && state.chain.length) { chainPos = (chainPos + 1) % state.chain.length; playPat = state.chain[chainPos]; }
+        if (state.page) playPat = -1;
+        else if (state.mode === 'song' && state.chain.length) { chainPos = (chainPos + 1) % state.chain.length; playPat = state.chain[chainPos]; }
         else playPat = state.cur;
       }
     }
@@ -866,14 +948,16 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   function begin() {
     if (playing) return;
     chainPos = 0;
-    playPat = state.mode === 'song' && state.chain.length ? state.chain[0] : state.cur;
+    playPat = state.page ? -1 : state.mode === 'song' && state.chain.length ? state.chain[0] : state.cur;
     playing = true; stepIdx = 0; baseTime = ctx.currentTime + 0.06; queue = []; prevHad = {};
     schedule(); timer = setInterval(schedule, 25);
     $('play').textContent = '■ Stop'; $('play').classList.add('playing');
+    $('fPlay').textContent = '■ Stop'; $('fPlay').classList.add('playing');
   }
   function stop() {
     playing = false; clearInterval(timer); queue = []; showStep(-1); markChain(-1); setCues([]);
     $('play').textContent = '▶ Play'; $('play').classList.remove('playing');
+    $('fPlay').textContent = '▶ Play a rhythm'; $('fPlay').classList.remove('playing');
   }
   function toggle() { playing ? stop() : start(); }
 
@@ -883,7 +967,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   function touchVel() { return state.touch / 100; }
   function record(id) {
     if (!playing || !state.rec) return;
-    var p = state.patterns[playPat], sd = stepDurFor(p), n = p.steps, now = ctx.currentTime - (ctx.outputLatency || 0);
+    var p = patAt(playPat), sd = stepDurFor(p), n = p.steps, now = ctx.currentTime - (ctx.outputLatency || 0);
     var step = ((Math.round(stepIdx - (baseTime - now) / sd) % n) + n) % n;
     skip[id] = ctx.currentTime + sd * 0.7; // do not replay the tap the player just made
     if (!p.drums[id][step]) {
@@ -1204,6 +1288,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   chipSet($('beats'), Object.keys(BEATS), function (n) { loadBeat(n); render(); save(); });
   chipSet($('sounds'), Object.keys(SOUNDS), function (n) { loadSound(n); render(); save(); });
   function markChips() {
+    Array.prototype.forEach.call($('fBeats').children, function (b) { b.classList.toggle('sel', b.dataset.name === P().beat); });
     Array.prototype.forEach.call($('beats').children, function (b) { b.classList.toggle('sel', b.dataset.name === P().beat); });
     Array.prototype.forEach.call($('sounds').children, function (b) { b.classList.toggle('sel', b.dataset.name === T().sound); });
   }
@@ -1267,6 +1352,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   // ---------- oud neck and flute holes ----------
   var SURFACES = { auto: 'Matches the sound', piano: 'Piano keys', oud: 'Oud neck', pipe: 'Flute holes' };
   function surfaceNow() {
+    var g = PG(); if (g && g.surface) return g.surface;
     if (state.surface !== 'auto') return state.surface;
     var i = T().inst; return i === 'oud' ? 'oud' : i === 'gasba' || i === 'zorna' ? 'pipe' : 'piano';
   }
@@ -1280,7 +1366,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   function degDown(k) {
     if (degDownKeys[k]) return;
     degDownKeys[k] = true;
-    var d = DEGKEYS[k], m = degMidi(state.sel, d);
+    var d = DEGKEYS[k], m = degMidi(curTrack(), d);
     if (surfaceNow() === 'oud' && state.oudTrem) tremStart('k' + k, m); else svStart('k' + k, m);
     if (holes[d]) holes[d].classList.add('down');
   }
@@ -1365,14 +1451,14 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     e.preventDefault();
     try { pipe.setPointerCapture(e.pointerId); } catch (x) {}
     var i = holeAt(e); pipePtr[e.pointerId] = i; holes[i].classList.add('down');
-    svStart('p' + e.pointerId, degMidi(state.sel, i));
+    svStart('p' + e.pointerId, degMidi(curTrack(), i));
   });
   pipe.addEventListener('pointermove', function (e) {
     if (!(e.pointerId in pipePtr)) return;
     var i = holeAt(e), prev = pipePtr[e.pointerId];
     if (i === prev) return;
     holes[prev].classList.remove('down'); holes[i].classList.add('down'); pipePtr[e.pointerId] = i;
-    svSlide('p' + e.pointerId, degMidi(state.sel, i), Math.max(0.05, glideS(T())));
+    svSlide('p' + e.pointerId, degMidi(curTrack(), i), Math.max(0.05, glideS(T())));
   });
   function pipeEnd(e) { if (!(e.pointerId in pipePtr)) return; holes[pipePtr[e.pointerId]].classList.remove('down'); delete pipePtr[e.pointerId]; svStop('p' + e.pointerId); }
   pipe.addEventListener('pointerup', pipeEnd); pipe.addEventListener('pointercancel', pipeEnd);
@@ -1468,7 +1554,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   }
   function render(light) {
     var L = LETTERS[state.cur], tdef = TRACKS.filter(function (t) { return t.id === state.sel; })[0];
-    $('bpmOut').textContent = state.bpm; $('swingOut').textContent = state.swing; $('octOut').textContent = T().octave;
+    $('bpmOut').textContent = state.bpm; $('fBpmOut').textContent = state.bpm; $('swingOut').textContent = state.swing; $('octOut').textContent = T().octave;
     $('touchOut').textContent = state.touch < 40 ? 'Soft' : state.touch < 55 ? 'Medium' : 'Hard';
     $('guide').classList.toggle('sel', state.guide); $('guide').setAttribute('aria-pressed', state.guide);
     renderSurface();
@@ -1476,7 +1562,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     $('notesSummary').textContent = tdef.name + ' notes in pattern ' + L;
     $('notesHint').textContent = tdef.name + ': ' + tdef.what;
     $('soundLbl').textContent = tdef.name + ' sound';
-    $('shapeSummary').textContent = 'Shape the ' + tdef.name.toLowerCase() + ' sound';
+    $('shapeSummary').textContent = 'Shape the ' + (PG() && PG().kind === 'mel' ? PG().name.replace('Raï ', '') : tdef.name).toLowerCase() + ' sound';
     renderLabels();
     qtChips.forEach(function (b, i) { b.classList.toggle('sel', state.qt[i]); b.setAttribute('aria-pressed', state.qt[i]); });
     markQt();
@@ -1504,11 +1590,49 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     markTies();
     applyMix();
   }
+  // ---------- instrument pages (#darbuka, #oud ...) ----------
+  (function () {
+    var a = el('a', 'chip', 'Studio'); a.href = '#'; a.dataset.page = ''; $('instNav').appendChild(a);
+    Object.keys(PAGES).forEach(function (k) { var c = el('a', 'chip', PAGES[k].name); c.href = '#' + k; c.dataset.page = k; $('instNav').appendChild(c); });
+  })();
+  chipSet($('fBeats'), Object.keys(BEATS), function (n) { loadBeat(n); render(); save(); });
+  $('fPlay').addEventListener('click', toggle);
+  syncers.push(bind('fBpm', function () { return state.bpm; }, function (v) { state.bpm = v; }));
+  var pageTitle = document.title, lastPage = null;
+  function applyPage() {
+    var g = PG();
+    if (playing) stop();
+    Object.keys(sv).forEach(svStop); Object.keys(held).forEach(function (m) { noteOff(+m); }); holdsClear();
+    document.body.classList.toggle('page', !!g);
+    document.body.classList.toggle('page-perc', !!g && g.kind === 'perc');
+    document.body.classList.toggle('page-mel', !!g && g.kind === 'mel');
+    document.body.classList.toggle('page-sounds', !!g && !!g.sounds);
+    $('focus').hidden = !g;
+    Array.prototype.forEach.call($('instNav').children, function (c) { var on = c.dataset.page === state.page; c.classList.toggle('sel', on); if (on) c.setAttribute('aria-current', 'page'); else c.removeAttribute('aria-current'); });
+    if (g) {
+      $('fName').textContent = g.name;
+      $('fAbout').innerHTML = g.about; // our own text, defined above
+      if (g.kind === 'perc') { state.perc = g.sim; renderSim(); }
+      else {
+        var solo = state.tracks.solo;
+        if (g.sound && solo.sound !== g.sound) state.tracks.solo = trackFromSound(g.sound, 75);
+        if (g.sounds && ['oud', 'gasba', 'zorna'].indexOf(solo.inst) >= 0) state.tracks.solo = trackFromSound('Raï lead', 75);
+      }
+      if (state.page !== lastPage) loadBeat(g.beat); // each instrument starts with a rhythm that suits it
+      document.title = g.name + ' · ' + pageTitle;
+    } else { document.title = pageTitle; renderSim(); }
+    lastPage = state.page;
+    render(); applyMix();
+  }
+  function route() { var h = location.hash.replace('#', ''); state.page = PAGES[h] ? h : ''; applyPage(); if (state.page) window.scrollTo(0, 0); }
+  window.addEventListener('hashchange', route);
+
   buildPiano();
   renderChain();
   if (!SIMS[state.perc]) state.perc = 'darbuka';
   renderSim();
-  render();
+  state.page = PAGES[location.hash.replace('#', '')] ? location.hash.replace('#', '') : '';
+  applyPage();
 
   // ---------- playhead, pad flashes, scope ----------
   var scope = $('scope'), g2 = scope.getContext('2d'), wave = new Uint8Array(1024), tick = 0, stroke = '#888';
@@ -1518,13 +1642,13 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       var cur = null;
       while (queue.length && queue[0].time <= ctx.currentTime) {
         var q = queue.shift(); cur = q; q.ids.forEach(flash);
-        if (state.guide) { var qp = state.patterns[q.pat], nx = (q.step + 1) % qp.steps; setCues(DRUMS.filter(function (d) { return qp.drums[d.id][nx]; }).map(function (d) { return d.id; })); }
-        if (state.mode === 'song') {
+        if (state.guide) { var qp = patAt(q.pat), nx = (q.step + 1) % qp.steps; setCues(DRUMS.filter(function (d) { return qp.drums[d.id][nx]; }).map(function (d) { return d.id; })); }
+        if (state.mode === 'song' && !state.page) {
           markChain(q.pos);
           if (q.pat !== state.cur) { state.cur = q.pat; render(); } // follow the song
         }
       }
-      if (cur) showStep(cur.pat === state.cur ? cur.step : -1);
+      if (cur) showStep(cur.pat === (state.page ? -1 : state.cur) ? cur.step : -1);
     }
     if (!scope.offsetParent) return;
     if (tick++ % 60 === 0) stroke = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || stroke;

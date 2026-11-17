@@ -38,6 +38,13 @@ a.card:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 .card h2 { font-family: var(--font-display); font-size: 22px; font-weight: 800; margin: 0; }
 .card p { margin: 0; color: var(--muted); }
 .card .go { margin-top: auto; padding-top: 6px; font-weight: 600; color: var(--accent); }
+.instruments h2 { font-family: var(--font-display); font-size: 22px; font-weight: 800; margin: 0 0 12px; }
+.instruments ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.instruments a { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 10px; background: var(--panel); border: 1px solid var(--line); color: inherit; text-decoration: none; }
+.instruments a:hover { border-color: var(--ink); }
+.instruments a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.instruments b { font-family: var(--font-display); font-size: 17px; }
+.instruments span { color: var(--muted); font-size: 13px; }
 footer { color: var(--muted); font-size: 13px; }
 footer a { color: inherit; }
 @media (prefers-reduced-motion: reduce) { a.card { transition: none; } a.card:hover { transform: none; } }
@@ -52,7 +59,7 @@ footer a { color: inherit; }
   <div class="cards">
     <a class="card main" href="bendir-rai/">
       <h2>Bendir &amp; Raï</h2>
-      <p>Tunisian percussion, an 80s drum machine and a raï keyboard with lead, chords and bass. Bend notes, use maqam quarter tones, and chain patterns into a song.</p>
+      <p>The studio: every instrument together, with lead, chords and bass parts and patterns you chain into a song.</p>
       <span class="go">Open →</span>
     </a>
     <a class="card alt" href="sixteen-steps/">
@@ -61,6 +68,21 @@ footer a { color: inherit; }
       <span class="go">Open →</span>
     </a>
   </div>
+  <section class="instruments" aria-labelledby="instTitle">
+    <h2 id="instTitle">Play one instrument</h2>
+    <ul>
+      <li><a href="bendir-rai/#darbuka"><b>Darbuka</b><span>Goblet drum: Dum, Tak, Ka, slaps and rolls</span></a></li>
+      <li><a href="bendir-rai/#bendir"><b>Bendir</b><span>Frame drum with buzzing snares</span></a></li>
+      <li><a href="bendir-rai/#tar"><b>Tar</b><span>Frame drum with jingles</span></a></li>
+      <li><a href="bendir-rai/#tbal"><b>Tbal</b><span>Big drum played with two sticks</span></a></li>
+      <li><a href="bendir-rai/#shqashiq"><b>Shqashiq</b><span>Iron castanets of stambeli</span></a></li>
+      <li><a href="bendir-rai/#drum-machine"><b>Drum machine</b><span>The 80s pop-raï beat</span></a></li>
+      <li><a href="bendir-rai/#oud"><b>Oud</b><span>Fretless lute: slide between notes</span></a></li>
+      <li><a href="bendir-rai/#gasba"><b>Gasba</b><span>Cane flute of traditional raï</span></a></li>
+      <li><a href="bendir-rai/#zorna"><b>Zorna</b><span>Loud double-reed pipe</span></a></li>
+      <li><a href="bendir-rai/#keyboard"><b>Raï keyboard</b><span>Synth leads with bends and quarter tones</span></a></li>
+    </ul>
+  </section>
   <footer>
     Made by Nadhem Khlij · <a href="https://github.com/NadhemKhlij/Mousikaelektrouniya">Source on GitHub</a> (MIT licence) ·
     Percussion recordings from the Versilian Community Sample Library (public domain); instrument notes from the FluidR3 GM soundfont by Frank Wen (CC BY 3.0).
