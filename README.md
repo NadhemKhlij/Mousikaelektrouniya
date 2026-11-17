@@ -19,6 +19,12 @@ python3 -m http.server 8000
 
 Then open <http://localhost:8000/bendir-rai/> or <http://localhost:8000/sixteen-steps/>.
 
+## Compose
+
+The [Compose page](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#compose) arranges instruments on a timeline. Each row is an instrument with mute, solo and volume. You add clips by clicking empty bars, then drag them to move or stretch them. A drum clip opens a step grid and a melody clip opens a note editor whose rows follow the key and maqam. It opens with an 8-bar example in D Nahawand.
+
+See [TODO.md](TODO.md) for what is planned next, including the guide for recording real instruments.
+
 ## Instrument pages
 
 Each instrument also has its own page, with a short introduction and a rhythm to play along with:
