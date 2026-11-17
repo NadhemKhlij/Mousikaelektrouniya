@@ -1,60 +1,74 @@
-# Bendir & Raï
+# Mousikaelektrouniya
 
-Two small browser instruments built with the Web Audio API. No build step, no dependencies.
+Browser instruments for Tunisian percussion and raï music, built with the Web Audio API. There is nothing to install and no build step: each app is a single HTML file.
 
-- **`bendir-rai/`** — every instrument is played on a screen shaped like the real thing. The percussion: a darbuka (centre Dum, ring Slap, edges Tak and Ka, hold to roll), a bendir with buzzing snares, a tar with jingles, a two-stick tbal, shqashiq castanets, claps and an 80s drum machine, with an optional big-button view and lights that show the next hit. The melodic instruments: a fretless oud neck, flute holes for the gasba and zorna, and piano keys for the raï synths. Three parts (lead, chords, bass) and four patterns chain into a song.
-- **`sixteen-steps/`** — the original 16-step drum machine and synth, fully synthesized.
+**Play it:** <https://nadhemkhlij.github.io/Mousikaelektrouniya/>
 
-## Play online
+## What's inside
 
-<https://nadhemkhlij.github.io/Mousikaelektrouniya/>
+- **Bendir & Raï** (`bendir-rai/`), the main app. It has three parts, each with its own address:
+  - **Studio** ([open](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/)): every instrument together, with four patterns you chain into a song and three melodic parts (lead, chords, bass).
+  - **Compose** ([open](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#compose)): instruments on a timeline. Each row has mute, solo and volume, and clips can be moved and stretched. Drum clips open a step grid and melody clips a note editor that follows the key and maqam.
+  - **One page per instrument**, played on a screen shaped like the real thing, with a rhythm to play along with:
+    [darbuka](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#darbuka),
+    [bendir](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#bendir),
+    [tar](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#tar),
+    [tbal](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#tbal),
+    [shqashiq](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#shqashiq),
+    [drum machine](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#drum-machine),
+    [oud](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#oud),
+    [gasba](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#gasba),
+    [zorna](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#zorna) and the
+    [raï keyboard](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#keyboard).
+- **Sixteen Steps** (`sixteen-steps/`): the first prototype, a simple 16-step drum machine and synth, fully synthesized.
 
-## Run locally
+Melodies follow Arabic maqamat (Hijaz, Kurd, Nahawand, Bayati, Rast, Ajam), including quarter tones.
 
-The percussion and keyboard recordings are loaded with `fetch`, so serve the folder over HTTP rather than opening the file directly:
+## Run it on your computer
+
+The sounds are loaded with `fetch`, so serve the folder over HTTP instead of opening the file directly. From the repository folder:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Then open <http://localhost:8000/bendir-rai/> or <http://localhost:8000/sixteen-steps/>.
+Then open <http://localhost:8000/>. Edit a file, save it and reload the page; there is nothing to compile.
 
-## Compose
+## Project layout
 
-The [Compose page](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#compose) arranges instruments on a timeline. Each row is an instrument with mute, solo and volume. You add clips by clicking empty bars, then drag them to move or stretch them. A drum clip opens a step grid and a melody clip opens a note editor whose rows follow the key and maqam. It opens with an 8-bar example in D Nahawand.
+```
+index.html              home page that links to everything
+bendir-rai/index.html   the main app: HTML, CSS and JavaScript in one file
+bendir-rai/s/*.json     sound packs (recordings, base64-encoded)
+sixteen-steps/          the first prototype
+tools/build_packs.py    builds the sound packs
+tools/packs.json        where every sound in the packs comes from
+TODO.md                 what's planned next, and the guide for recording real instruments
+CONTRIBUTING.md         how the code is organised and how to work on it
+```
 
-See [TODO.md](TODO.md) for what is planned next, including the guide for recording real instruments.
+## Working on it
 
-## Instrument pages
+Read [CONTRIBUTING.md](CONTRIBUTING.md) first. It explains how the code is organised, how to add rhythms, sounds and instruments, and how to test a change. Planned work is in [TODO.md](TODO.md).
 
-Each instrument also has its own page, with a short introduction and a rhythm to play along with:
-[darbuka](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#darbuka),
-[bendir](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#bendir),
-[tar](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#tar),
-[tbal](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#tbal),
-[shqashiq](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#shqashiq),
-[drum machine](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#drum-machine),
-[oud](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#oud),
-[gasba](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#gasba),
-[zorna](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#zorna) and the
-[raï keyboard](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#keyboard).
-Practising on these pages never changes your song in the studio.
+Every push to `main` updates the live site through GitHub Pages within a minute or two, so work on a branch and open a pull request.
 
-## The oud
+## How the sounds are made
 
-No openly licensed oud recordings were available, so the oud is a physical model of a plucked double string with a deep wooden body. Its settings were tuned by measuring real oud recordings (how fast each note fades, how bright it is, where the body resonates) and matching the model to them. The recordings were used only as a reference and are not part of this project.
+- **Recorded:** the darbuka, bendir, tar, tbal, clap and shqashiq strokes, and the notes of the gasba, zorna, accordion, brass, strings, bass and raï lead. All of them are stand-ins until we record real Tunisian instruments (see [TODO.md](TODO.md)).
+- **The oud:** synthesized as a plucked double string with a deep wooden body. No openly licensed oud recordings were available. The model's settings were tuned by measuring real oud recordings (how fast each note fades, how bright it is, where the body resonates) and matching the model to them. Those recordings were only a reference and are not part of this project.
+- **Synthesized in the page:** the drum machine, plus the breath added to the gasba.
 
 ## Rhythms
 
-Fazzani, Douik, Barwal, Btayhi and Khatm follow published dum/tak transcriptions; Stambeli and Raï are sketches. Correct them by ear, or record your own with **Record my taps**.
+Fazzani, Douik, Barwal, Btayhi and Khatm follow published dum/tak transcriptions. Stambeli and the raï grooves are sketches. Correct them by ear, or record your own with **Record my taps** in the studio.
 
-## Sample credits
+## Credits
 
-- Percussion: [Versilian Community Sample Library](https://github.com/sgossner/VCSL) (CC0 / public domain): darbuka, frame drums, tambourine, finger cymbals, bass drum and claps.
+- Percussion: [Versilian Community Sample Library](https://github.com/sgossner/VCSL) (CC0, public domain): darbuka, frame drums, tambourine, finger cymbals, bass drum and claps.
 - Darbuka slap: [Darbuka App](https://github.com/codewithasfend/Darbuka-App) by asfend (MIT).
 - Instrument notes: FluidR3 GM soundfont by Frank Wen (CC BY 3.0), via [midi-js-soundfonts](https://github.com/gleitz/midi-js-soundfonts).
-- The gasba uses the soundfont's pan-flute recording with added breath. The oud (a plucked-string model) and the drum machine are synthesized in the page.
 
 ## Licence
 
-The code is released under the [MIT licence](LICENSE). The recordings keep their own terms, listed under Sample credits.
+The code is released under the [MIT licence](LICENSE). The recordings keep their own terms, listed under Credits.

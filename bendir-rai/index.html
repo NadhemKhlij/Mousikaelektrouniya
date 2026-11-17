@@ -1,10 +1,9 @@
 <!doctype html>
 <html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<body style="margin:0">
 <title>Bendir &amp; Raï</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&family=Bricolage+Grotesque:wght@600;800&display=swap">
 <style>
 /* Layout: a song bar on top (patterns and their order), then the two instruments you play
@@ -320,7 +319,8 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
 }
 @media (prefers-reduced-motion: reduce) { .zl, .bpad { transition: none; } .ripple { animation-duration: 0.01s; } }
 </style>
-
+</head>
+<body style="margin:0">
 <div class="wrap">
   <header class="top">
     <div class="brand">
@@ -516,6 +516,9 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     Bass:          { inst: 'bass',      cutoff: 85, attack: 0,  release: 12, delay: 0,  octave: 2, glide: 0,  vibrato: 0 },
     'Analog lead': { inst: '',          cutoff: 72, attack: 1,  release: 18, delay: 26, octave: 4, glide: 28, vibrato: 30 }
   };
+  // Sounds made in the page instead of from a recorded pack. When real oud recordings are packed as
+  // s/oud.json (python3 tools/build_packs.py notes FOLDER oud), delete oud from this list to use them.
+  var MODELLED = { oud: true };
   var SOUND_KEYS = ['inst', 'cutoff', 'attack', 'release', 'delay', 'glide', 'vibrato', 'octave', 'breath'];
   var TRACKS = [
     { id: 'lead', name: 'Lead', sound: 'Raï lead', level: 70, what: 'one note per step' },
@@ -670,9 +673,13 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   var glideS = function (s) { return Math.pow(s.glide / 100, 2) * 0.6; };
 
   // samples
-  var SAMPLE_NOTES = [];
-  for (var so = 1; so <= 6; so++) [['C', 0], ['E', 4], ['Ab', 8]].forEach(function (n) { SAMPLE_NOTES.push({ name: n[0] + so, midi: 12 * (so + 1) + n[1] }); });
-  SAMPLE_NOTES.push({ name: 'C7', midi: 96 });
+  // An instrument pack holds one recording per note, keyed by its name ("C4", "Eb3", "F#2" or "Fs2").
+  // Any set of notes works: each played note uses the nearest recording, shifted to the right pitch.
+  var NOTE_PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }, noteLists = {};
+  function noteMidi(name) {
+    var m = /^([A-G])(b|#|s)?(-?\d)$/.exec(name); if (!m) return null;
+    return 12 * (+m[3] + 1) + NOTE_PC[m[1]] + (m[2] === 'b' ? -1 : m[2] ? 1 : 0);
+  }
   var packs = {}, decoding = {}, bufs = {}, ready = {}, failed = {};
   function fetchPack(name) {
     if (!packs[name]) packs[name] = fetch('s/' + name + '.json').then(function (r) { if (!r.ok) throw new Error('missing'); return r.json(); });
@@ -682,6 +689,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var p = fetchPack(name);
     if (!ctx) return p.catch(function () {});
     if (!decoding[name]) decoding[name] = p.then(function (obj) {
+      noteLists[name] = Object.keys(obj).map(function (k) { return { name: k, midi: noteMidi(k) }; }).filter(function (n) { return n.midi != null; });
       return Promise.all(Object.keys(obj).map(function (k) {
         var bin = atob(obj[k]), u = new Uint8Array(bin.length);
         for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
@@ -693,15 +701,16 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   }
   function loadSounds() {
     var need = ['drums'];
-    TRACKS.concat([{ id: 'solo' }]).forEach(function (t) { var i = state.tracks[t.id].inst; if (i && i !== 'oud' && need.indexOf(i) < 0) need.push(i); });
-    if (state.page === 'compose' && state.compose) state.compose.tracks.forEach(function (t) { var i = t.kind === 'mel' && SOUNDS[t.inst].inst; if (i && i !== 'oud' && need.indexOf(i) < 0) need.push(i); });
+    TRACKS.concat([{ id: 'solo' }]).forEach(function (t) { var i = state.tracks[t.id].inst; if (i && !MODELLED[i] && need.indexOf(i) < 0) need.push(i); });
+    if (state.page === 'compose' && state.compose) state.compose.tracks.forEach(function (t) { var i = t.kind === 'mel' && SOUNDS[t.inst].inst; if (i && !MODELLED[i] && need.indexOf(i) < 0) need.push(i); });
     return Promise.all(need.map(loadPack));
   }
   function sampleFor(inst, midi) {
     var best = null, dist = 99;
-    for (var i = 0; i < SAMPLE_NOTES.length; i++) {
-      var d = Math.abs(SAMPLE_NOTES[i].midi - midi);
-      if (d < dist && bufs[inst + '/' + SAMPLE_NOTES[i].name]) { dist = d; best = SAMPLE_NOTES[i]; }
+    var list = noteLists[inst] || [];
+    for (var i = 0; i < list.length; i++) {
+      var d = Math.abs(list[i].midi - midi);
+      if (d < dist && bufs[inst + '/' + list[i].name]) { dist = d; best = list[i]; }
     }
     return best && { buf: bufs[inst + '/' + best.name], midi: best.midi };
   }
@@ -853,9 +862,9 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   function makeVoice(trId, midi, t, fromHz, live) {
     var s = state.tracks[trId] || compCache[trId], cut = cutoffHz(s), f = ctx.createBiquadFilter(), g = ctx.createGain();
     var hz = midiHz(midi), gl = glideS(s), from = gl > 0.005 && fromHz ? fromHz : hz, land = t + (from === hz ? 0 : gl);
-    var smp = s.inst && s.inst !== 'oud' && sampleFor(s.inst, midi), isBuf = !!smp || s.inst === 'oud', parts, pitch = [], peak;
+    var smp = s.inst && !MODELLED[s.inst] && sampleFor(s.inst, midi), isBuf = !!smp || !!MODELLED[s.inst], parts, pitch = [], peak;
     f.type = 'lowpass';
-    if (s.inst === 'oud') {
+    if (MODELLED[s.inst]) {
       var os = ctx.createBufferSource();
       os.buffer = oudBuffer(midi); // the body and the plectrum are part of the model
       if (os.detune) pitch.push(os.detune);
@@ -931,7 +940,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     want[midi] = true;
     if (held[midi]) return;
     var inst = T().inst;
-    if (inst && inst !== 'oud' && !ready[inst] && !failed[inst]) { loadPack(inst).then(function () { if (want[midi] && !held[midi]) startNote(midi); }); return; }
+    if (inst && !MODELLED[inst] && !ready[inst] && !failed[inst]) { loadPack(inst).then(function () { if (want[midi] && !held[midi]) startNote(midi); }); return; }
     startNote(midi);
   }
   function startNote(midi) {
@@ -961,7 +970,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       v.g.gain.linearRampToValueAtTime(v.peak, t + attackS(v.s));
       v.midi0 = v.cur = midi; sv[key] = v;
     }
-    if (inst && inst !== 'oud' && !ready[inst] && !failed[inst]) {
+    if (inst && !MODELLED[inst] && !ready[inst] && !failed[inst]) {
       sv[key] = { pending: midi };
       loadPack(inst).then(function () { var p = sv[key]; if (p && p.pending != null) { delete sv[key]; svStart(key, p.pending); } });
       return;
@@ -2115,3 +2124,5 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   }
 })();
 </script>
+</body>
+</html>

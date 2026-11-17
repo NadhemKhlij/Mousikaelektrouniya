@@ -1,0 +1,129 @@
+# Working on Mousikaelektrouniya
+
+This guide is for anyone changing the code or the sounds. For what the project is, see [README.md](README.md); for what's planned, see [TODO.md](TODO.md).
+
+## Getting set up
+
+1. Ask Nadhem to add you as a collaborator on GitHub, or fork the repository.
+2. Clone it and start a local server from the repository folder:
+
+   ```bash
+   git clone https://github.com/NadhemKhlij/Mousikaelektrouniya.git
+   cd Mousikaelektrouniya
+   python3 -m http.server 8000
+   ```
+
+3. Open <http://localhost:8000/bendir-rai/>. Edit, save and reload; there is no build step and no dependencies to install.
+
+You need Python 3 for the local server. The sound-pack builder also needs [ffmpeg](https://ffmpeg.org/).
+
+## How we work together
+
+- `main` is the live site: every push to it is published by GitHub Pages within a minute or two. Keep it working.
+- Do each change on its own branch (`git switch -c add-saadaoui-rhythm`), push it, and open a pull request. The other person reviews it before it is merged.
+- Keep pull requests small and focused on one thing, so they are easy to review.
+- Before you open a pull request, go through the checks in [Testing a change](#testing-a-change).
+
+## How the app is organised
+
+Everything for the main app is in `bendir-rai/index.html`: the CSS in `<style>`, the page structure, then one `<script>`. The script is split into sections marked with comments like `// ---------- audio ----------`; search for `// ----------` to jump between them.
+
+### Data you will most often change
+
+These tables near the top of the script describe the music; most features read from them.
+
+| Name | What it holds |
+|---|---|
+| `DRUMS` | Every drum stroke: `id`, display `name` and computer `key`. `head: true` marks darbuka strokes; `machine: true` marks the drum machine, which is synthesized. |
+| `SCALES` | The maqamat, as semitone steps from the key note. `1.5` and `3.5` are quarter tones. |
+| `SOUNDS` | The melodic sounds: `inst` is the sound pack name in `s/`, plus brightness, fades, echo, glide, vibrato and default octave. |
+| `MODELLED` | Sounds made in the page instead of from a pack. The oud is listed here. |
+| `BEATS` | Rhythm presets: `steps` is 16 for 4/4 or 12 for 6/8, `bpm` is the tempo, and `d` maps each stroke id to a pattern of `x` (hit) and `.` (rest). |
+| `PAGES` | The instrument pages: the address after `#`, the name, the simulator or sound it shows, its starting rhythm, and its introduction text. |
+| `SIMS` | How each percussion simulator is drawn. A round drum is made of rings (`r: [inner, outer]`, from 0 to 1), which can be split into left (`side: -1`) and right (`side: 1`). `hold` says what happens while a finger stays down. |
+| `KITS` | Which strokes each percussion track has on the Compose page. |
+
+### The other sections
+
+- **state:** everything the user changes, saved to the browser's `localStorage` under the key `bendir-rai-4`. On load, the `restore` function checks the saved data and falls back to the example song when something doesn't fit.
+- **audio:**
+  - `ensureAudio` creates the audio engine on the first click or key press.
+  - `loadPack` fetches and decodes a sound pack.
+  - `hit` and `playStroke` play drum strokes.
+  - `makeVoice` builds one melodic note, from a recording or from the oud model (`makeOud`).
+- **sequencer:** the studio's player, which loops a pattern or plays the song order.
+- **percussion simulators:** draw a drum from its `SIMS` entry and turn a touch into a stroke, using where it lands.
+- **step grids, song bar, tracks:** the studio's editors.
+- **keyboard, oud neck and flute holes:** the three playing surfaces for melodic sounds.
+- **composer:** the Compose page: timeline, clips, mixer and the two clip editors.
+  - Song data lives in `state.compose`. Each track is `{ kind: 'perc' | 'mel', inst, vol, mute, solo, octave, clips }`.
+  - A drum clip is `{ start, len, steps: { strokeId: [true/false per 16th note] } }`.
+  - A melody clip is `{ start, len, notes: [{ s: step, r: scale degree, l: length in steps }] }`.
+- **instrument pages:** reads the address after `#` (for example `#oud`) and shows that page. Instrument pages use their own practice rhythm (`state.practice`) and voice (`state.tracks.solo`), so they never change the studio song.
+
+### Saved data
+
+People's songs are stored in their browser. If you change the shape of what is saved, make sure `restore` still accepts older saved data (fill in what's missing) instead of throwing it away. If an old shape really can't be read, change the storage key (`bendir-rai-4`) so old data is ignored rather than breaking the page.
+
+## Common tasks
+
+### Add a rhythm
+
+Add an entry to `BEATS`. Use 16 steps for 4/4 and 12 for 6/8, and name strokes by their `DRUMS` id:
+
+```js
+Saadaoui: { steps: 16, bpm: 96, d: { dum: 'x.....x...x.....', tak: '....x.......x...', ka: '..x.......x...x.' } },
+```
+
+It appears in the studio, on the instrument pages that use those strokes, and as a fill on the Compose page (4/4 only).
+
+### Use real recordings for an instrument
+
+Name each recording after its note (`C4.wav`, `Eb3.wav`, `F#2.wav`), put them in one folder, and run:
+
+```bash
+python3 tools/build_packs.py notes path/to/recordings oud
+```
+
+This trims and levels each note and writes `bendir-rai/s/oud.json`. Notes can be any set; the app uses the nearest recording and shifts its pitch.
+
+- **For the oud:** remove `oud` from `MODELLED` so the app uses the recordings instead of the model.
+- **For a new instrument:** also add a `SOUNDS` entry whose `inst` is the pack name.
+
+[TODO.md](TODO.md) has the guide for recording.
+
+### Change or add a drum sound
+
+1. Edit `tools/packs.json`. Each drum entry says where the recording comes from (`vcsl:` for the Versilian library, or a full URL), how many seconds to keep, its peak level and its silence threshold.
+2. Rebuild:
+
+   ```bash
+   python3 tools/build_packs.py --only drums
+   ```
+
+3. For a new stroke, also add it to `DRUMS`, to the right `SIMS` entry (where it sits on the drum) and to `KITS` (for the Compose page).
+
+Running `python3 tools/build_packs.py` with no options rebuilds every pack from `tools/packs.json`; downloads are cached in `tools/.cache/`.
+
+### Add an instrument page
+
+Add an entry to `PAGES`. Percussion pages point at a `SIMS` key; melodic pages name a `SOUNDS` entry and a playing surface (`piano`, `oud` or `pipe`). The navigation and the address (`#your-page`) work automatically. Add the page to the list on the home page (`index.html`) too.
+
+## Rules of the road
+
+- **No build step and no dependencies.** Plain JavaScript in the page, and libraries only if one does a lot of work for us.
+- **Colours come from the tokens** at the top of the CSS (`--bg`, `--ink`, `--drum`, `--synth` and so on). The light values are on `:root`, and the dark values are repeated in the two dark-mode blocks under it. Don't put a colour directly on a component, or it will break in one of the two themes.
+- **It must work on a phone.** Check at about 400 px wide: no sideways scrolling of the page, and everything usable by touch.
+- **Only add recordings we're allowed to share.** That means public domain, Creative Commons or our own, and each one credited in the README. A recording with no licence can't go in, even if it's on GitHub.
+- **Write for musicians.** Labels and help text use the words a player would use.
+
+## Testing a change
+
+There are no automated tests yet. Before opening a pull request, check by hand:
+
+- [ ] The studio plays (▶ Play) and the drum heads respond to taps.
+- [ ] The Compose page plays the example song, and you can add a clip and a note.
+- [ ] The pages you changed work, and so does one you didn't change.
+- [ ] It works at phone width (open your browser's developer tools and pick a phone size), in both light and dark mode.
+- [ ] The browser console shows no errors.
+- [ ] A song you made before your change still loads after it. Saved songs live in your browser, so test in the same browser.

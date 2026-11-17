@@ -1,0 +1,33 @@
+{
+  "_about": "Where every sound in bendir-rai/s/ comes from. Rebuild with: python3 tools/build_packs.py",
+  "drums": {
+    "type": "hits",
+    "hits": {
+      "dum":     { "src": "vcsl:Membranophones/Struck Membranophones/Darbuka/Darbuka_1_hit_vl2_rr1.wav", "seconds": 0.8,  "peak_db": -1, "silence_db": -38 },
+      "dum2":    { "src": "vcsl:Membranophones/Struck Membranophones/Darbuka/Darbuka_1_hit_vl2_rr2.wav", "seconds": 0.8,  "peak_db": -1, "silence_db": -38 },
+      "dums":    { "src": "vcsl:Membranophones/Struck Membranophones/Darbuka/Darbuka_1_hit_vl1_rr1.wav", "seconds": 0.8,  "peak_db": -9, "silence_db": -45 },
+      "tak":     { "src": "vcsl:Membranophones/Struck Membranophones/Darbuka/Darbuka_2_hit_vl2_rr1.wav", "seconds": 0.35, "peak_db": -1, "silence_db": -38 },
+      "tak2":    { "src": "vcsl:Membranophones/Struck Membranophones/Darbuka/Darbuka_2_hit_vl2_rr2.wav", "seconds": 0.35, "peak_db": -1, "silence_db": -38 },
+      "ka":      { "src": "vcsl:Membranophones/Struck Membranophones/Darbuka/Darbuka_2_hit_vl1_rr2.wav", "seconds": 0.3,  "peak_db": -7, "silence_db": -38 },
+      "ka2":     { "src": "vcsl:Membranophones/Struck Membranophones/Darbuka/Darbuka_2_hit_vl1_rr1.wav", "seconds": 0.3,  "peak_db": -7, "silence_db": -38 },
+      "slap":    { "src": "https://raw.githubusercontent.com/codewithasfend/Darbuka-App/HEAD/DarbukaApp/DarbukaApp/Resources/Raw/slap.mp3", "seconds": 0.45, "peak_db": -2, "silence_db": -40 },
+      "bendir":  { "src": "vcsl:Membranophones/Struck Membranophones/Frame Drum/HDrumL_Hit_v3_rr1_Sum.wav", "seconds": 0.9, "peak_db": -1, "silence_db": -38 },
+      "bendirt": { "src": "vcsl:Membranophones/Struck Membranophones/Frame Drum/HDrumS_HitMuted_v3_rr1_Sum.wav", "seconds": 0.4, "peak_db": -3, "silence_db": -40 },
+      "tar":     { "src": "vcsl:Idiophones/Struck Idiophones/Tambourine 2/Tamb2_Hit_v2_rr2_Mid.wav", "seconds": 0.5, "peak_db": -5, "silence_db": -38 },
+      "tarj":    { "src": "vcsl:Idiophones/Struck Idiophones/Tambourine 2/Tamb2_Shake_rr3_Mid.wav", "seconds": 0.45, "peak_db": -6, "silence_db": -40 },
+      "tarj2":   { "src": "vcsl:Idiophones/Struck Idiophones/Tambourine 2/Tamb2_Shake_rr4_Mid.wav", "seconds": 0.45, "peak_db": -6, "silence_db": -40 },
+      "shq":     { "src": "vcsl:Idiophones/Struck Idiophones/Finger Cymbals/Fing_Cymb.wav", "seconds": 0.22, "peak_db": -6, "silence_db": -60 },
+      "tbal":    { "src": "vcsl:Membranophones/Struck Membranophones/Bass Drum 1/BDrumNew_hit_v5_rr1_Sum.wav", "seconds": 0.8, "peak_db": -1, "silence_db": -38 },
+      "tbalt":   { "src": "vcsl:Membranophones/Struck Membranophones/Frame Drum/HDrumS_Hit_v3_rr1_Sum.wav", "seconds": 0.45, "peak_db": -3, "silence_db": -40 },
+      "clap":    { "src": "vcsl:Idiophones/Struck Idiophones/Claps/Clap_rr1.wav", "seconds": 0.5, "peak_db": -3, "silence_db": -38 },
+      "clap2":   { "src": "vcsl:Idiophones/Struck Idiophones/Claps/Clap_rr2.wav", "seconds": 0.5, "peak_db": -3, "silence_db": -38 }
+    }
+  },
+  "lead":      { "type": "gm", "instrument": "lead_2_sawtooth" },
+  "zorna":     { "type": "gm", "instrument": "shanai" },
+  "gasba":     { "type": "gm", "instrument": "pan_flute" },
+  "accordion": { "type": "gm", "instrument": "accordion" },
+  "brass":     { "type": "gm", "instrument": "synth_brass_1" },
+  "strings":   { "type": "gm", "instrument": "string_ensemble_1" },
+  "bass":      { "type": "gm", "instrument": "synth_bass_1" }
+}
