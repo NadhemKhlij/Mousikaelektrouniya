@@ -51,7 +51,8 @@ Once the recordings are in hand, they get trimmed, levelled and packed into the 
 - [ ] Download and share for the studio's song too (today only the Compose page has them).
 - [ ] A short GIF of the app being played, for the README.
 - [ ] Studio: melody loops longer than one bar.
-- [ ] Compose: record live playing straight into a clip.
+- [x] Compose: record live playing straight into a clip, with a click track.
+- [x] Compose: undo and redo.
 - [ ] Compose: 6/8 time for the Tunisian rhythms that use it (fazzani, khatm, stambeli).
 - [ ] Record your voice, since raï is built around the singer.
 - [ ] More rhythms: add the ones Nadhem knows as presets.

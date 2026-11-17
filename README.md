@@ -17,7 +17,7 @@ Browser instruments for Tunisian percussion and raï music, built with the Web A
 
 - **Bendir & Raï** (`bendir-rai/`), the main app. It has three parts, each with its own address:
   - **Studio** ([open](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/)): every instrument together, with four patterns you chain into a song and three melodic parts (lead, chords, bass).
-  - **Compose** ([open](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#compose)): instruments on a timeline. Each row has mute, solo and volume, and clips can be moved and stretched. Drum clips open a step grid and melody clips a note editor that follows the key and maqam.
+  - **Compose** ([open](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#compose)): instruments on a timeline. Each row has mute, solo and volume, and clips can be moved and stretched. Drum clips open a step grid and melody clips a note editor that follows the key and maqam. Pick a track to play its instrument, and turn on **● Record** to write what you play into the song, with an optional click track. **Undo** and **Redo** (Ctrl+Z, Ctrl+Shift+Z) cover every change.
   - **One page per instrument**, played on a screen shaped like the real thing, with a rhythm to play along with:
     [darbuka](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#darbuka),
     [bendir](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#bendir),

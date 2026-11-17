@@ -59,6 +59,8 @@ These tables near the top of the script describe the music; most features read f
   - Song data lives in `state.compose`. Each track is `{ kind: 'perc' | 'mel', inst, vol, mute, solo, octave, clips }`.
   - A drum clip is `{ start, len, steps: { strokeId: [true/false per 16th note] } }`.
   - A melody clip is `{ start, len, notes: [{ s: step, r: scale degree, l: length in steps }] }`.
+- **playing a track and recording into it:** picking a track shows its instrument under the editor (the same drum or keyboard panel the other pages use). With Record on, drum strokes go through `record` → `cRecordHit` and melody notes through `cRecNoteOn` / `cRecNoteOff`, which place them at the step that is playing (`cPos`) and make a one-bar clip where there is none.
+- **undo and redo:** every change on the Compose page calls `save()`, which also feeds the undo history. Changes within half a second of each other become one step, and a whole recording take is one step.
 - **download the song as a WAV file:** `renderSong` plays the whole song into an offline audio context (faster than real time) by building a second copy of the mixer with `buildGraph`, and `wavBlob` turns the result into a file.
 - **share a song as a link:** `packSong` writes the song in a compact form, which is compressed and placed after `#song=` in the link. `unpackSong` reads it back and checks every value, because a link can contain anything. Opening a shared song keeps the person's own song in `state.composeBackup` until they choose.
 - **instrument pages:** reads the address after `#` (for example `#oud`) and shows that page. Instrument pages use their own practice rhythm (`state.practice`) and voice (`state.tracks.solo`), so they never change the studio song.

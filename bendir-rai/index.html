@@ -189,6 +189,11 @@ kbd { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--li
 .shared-note { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 14px; border-radius: 10px; background: var(--bg); border: 2px solid var(--accent); }
 .shared-note p { margin: 0; flex: 1 1 260px; font-weight: 600; }
 #cExportNote:empty { display: none; }
+.cplay { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 4px; }
+.cplay h3 { font-family: var(--font-display); font-size: 17px; font-weight: 800; margin: 0; }
+.cplay p { margin: 0; }
+#cRec.sel { background: var(--drum); border-color: var(--drum); color: var(--on-accent); }
+.tl-head { cursor: pointer; }
 .ceditor { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
 .ced-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .ced-head h3 { font-family: var(--font-display); font-size: 17px; font-weight: 800; margin: 0 auto 0 0; }
@@ -224,7 +229,9 @@ kbd { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--li
 .panel.focus .back:hover { color: var(--ink); text-decoration: underline; }
 body.page .panel.song, body.page #percTabs, body.page .transport, body.page #recHint, body.page #patDetails,
 body.page #tracks, body.page #tracksHint, body.page #notesDetails, body.page #surfRow, body.page.page-perc #synthPanel,
-body.page.page-compose #drumsPanel, body.page.page-compose #synthPanel, body.page.page-mel #drumsPanel, body.page.page-mel:not(.page-sounds) #soundRow, body.page #drumPatLbl { display: none; }
+body.page.page-compose:not(.play-perc) #drumsPanel, body.page.page-compose:not(.play-mel) #synthPanel,
+body.page-compose #guide, body.page-compose #guideHint, body.page-compose #soundRow, body.page-compose #synthKnobs,
+body.page-compose #qtRow, body.page-compose #shapeDetails, body.page.page-mel #drumsPanel, body.page.page-mel:not(.page-sounds) #soundRow, body.page #drumPatLbl { display: none; }
 body.page .sim { flex-basis: 440px; width: min(100%, 440px); }
 body.page .sim.bpads { flex-basis: 560px; width: min(100%, 560px); }
 body.page .panel.drums .head h2, body.page .panel.synth .head h2 { display: none; }
@@ -414,7 +421,11 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     <p class="hint" id="cExportNote" role="status"></p>
     <div class="ctop">
       <button class="play" id="cPlay" type="button">▶ Play</button>
+      <button class="chip rec" id="cRec" type="button" aria-pressed="false">● Record</button>
       <button class="chip" id="cHome" type="button">⏮ Back to the start</button>
+      <button class="chip" id="cClick" type="button" aria-pressed="false">Click track</button>
+      <button class="chip" id="cUndo" type="button" title="Undo (Ctrl+Z)">↶ Undo</button>
+      <button class="chip" id="cRedo" type="button" title="Redo (Ctrl+Shift+Z)">↷ Redo</button>
       <div class="ctl"><label for="cBpm">Tempo <output id="cBpmOut">100</output> BPM</label><input id="cBpm" type="range" min="50" max="180" step="1"></div>
       <div class="ctl"><label for="cRoot">Key</label><select id="cRoot"></select></div>
       <div class="ctl"><label for="cScale">Maqam</label><select id="cScale"></select></div>
@@ -424,6 +435,10 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     </div>
     <div class="tl-wrap" id="tlWrap"><div class="tl" id="tl"></div></div>
     <div class="ceditor" id="cEditor"></div>
+    <div class="cplay" id="cPlayHead">
+      <h3 id="cPlayTitle"></h3>
+      <p class="hint" id="cPlayHint"></p>
+    </div>
   </section>
 
   <section class="panel drums" id="drumsPanel" aria-label="Percussion">
@@ -437,7 +452,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
           <div class="chips"><button class="chip" id="viewReal" type="button">The real drum</button><button class="chip" id="viewButtons" type="button">Big buttons</button></div></div>
         <div class="ctl"><label for="touch">How hard you hit: <output id="touchOut">Hard</output></label><input id="touch" type="range" min="10" max="100" step="1"></div>
         <button class="chip" id="guide" type="button" aria-pressed="true">Light up the next hit</button>
-        <p class="hint">With a rhythm playing, the next stroke lights up so you can play along. All drums on a computer: <kbd>B</kbd> <kbd>N</kbd> <kbd>M</kbd> <kbd>V</kbd> and hold <kbd>R</kbd> for the darbuka, <kbd>4</kbd>–<kbd>8</kbd> for the other hand drums, <kbd>9</kbd> <kbd>0</kbd> <kbd>-</kbd> <kbd>=</kbd> for the drum machine.</p>
+        <p class="hint" id="guideHint">With a rhythm playing, the next stroke lights up so you can play along. All drums on a computer: <kbd>B</kbd> <kbd>N</kbd> <kbd>M</kbd> <kbd>V</kbd> and hold <kbd>R</kbd> for the darbuka, <kbd>4</kbd>–<kbd>8</kbd> for the other hand drums, <kbd>9</kbd> <kbd>0</kbd> <kbd>-</kbd> <kbd>=</kbd> for the drum machine.</p>
       </div>
     </div>
 
@@ -486,14 +501,14 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     </div>
     <p class="hint" id="surfHint"></p>
 
-    <div class="knobs">
+    <div class="knobs" id="synthKnobs">
       <div class="ctl"><label for="root">Key</label><select id="root"></select></div>
       <div class="ctl"><label for="scale">Maqam</label>
         <select id="scale"><option value="hijaz">Hijaz</option><option value="kurd">Kurd</option><option value="nahawand">Nahawand (minor)</option><option value="bayati">Bayati (quarter tone)</option><option value="rast">Rast (quarter tones)</option><option value="ajam">Ajam (major)</option></select></div>
       <div class="ctl"><span class="lbl">Octave <output id="octOut">4</output></span>
         <div class="chips"><button class="chip" id="octDown" type="button">− Lower</button><button class="chip" id="octUp" type="button">+ Higher</button></div></div>
     </div>
-    <div class="ctl">
+    <div class="ctl" id="qtRow">
       <span class="lbl">Quarter-tone keys: lower a note by a quarter tone, like the scale buttons on an oriental keyboard</span>
       <div class="chips" id="qt"></div>
     </div>
@@ -506,7 +521,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       </div>
     </details>
 
-    <details>
+    <details id="shapeDetails">
       <summary id="shapeSummary">Shape the sound</summary>
       <div class="inner">
         <div class="knobs">
@@ -673,6 +688,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   var saveTimer, STORE = 'bendir-rai-4';
   function save() {
     clearTimeout(saveTimer);
+    if (state.page === 'compose' && hist && hist.last != null) histSoon();
     saveTimer = setTimeout(function () { try { localStorage.setItem(STORE, JSON.stringify(Object.assign({}, state, { page: '' }))); } catch (e) {} }, 300);
   }
   (function restore() {
@@ -994,11 +1010,13 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     liveHz = v.hz;
     v.g.gain.linearRampToValueAtTime(v.peak, t + attackS(v.s));
     held[midi] = v;
+    cRecNoteOn('k' + midi, midi);
   }
   function noteOff(midi) {
     delete want[midi];
     var v = held[midi]; if (!v) return; delete held[midi];
     releaseVoice(v);
+    cRecNoteOff('k' + midi);
   }
   function releaseVoice(v) {
     var t = ctx.currentTime;
@@ -1015,6 +1033,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       var t = ctx.currentTime, v = makeVoice(curTrack(), midi, t, 0, true);
       v.g.gain.linearRampToValueAtTime(v.peak, t + attackS(v.s));
       v.midi0 = v.cur = midi; sv[key] = v;
+      cRecNoteOn('s' + key, midi);
     }
     if (inst && !MODELLED[inst] && !ready[inst] && !failed[inst]) {
       sv[key] = { pending: midi };
@@ -1034,7 +1053,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       p.cancelScheduledValues(now); p.setValueAtTime(p.value, now); p.linearRampToValueAtTime(b + c, now + Math.max(0.012, glide));
     });
   }
-  function svStop(key) { var v = sv[key]; if (!v) return; delete sv[key]; if (v.pending == null) releaseVoice(v); }
+  function svStop(key) { var v = sv[key]; if (!v) return; delete sv[key]; if (v.pending == null) { releaseVoice(v); cRecNoteOff('s' + key); } }
 
   // ---------- sequencer ----------
   var playing = false, timer = null, stepIdx = 0, baseTime = 0, queue = [], shown = -1, skip = {};
@@ -1098,6 +1117,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   DRUMS.forEach(function (d) { DRUM_BY[d.id] = d; });
   function touchVel() { return state.touch / 100; }
   function record(id) {
+    if (state.page === 'compose') { cRecordHit(id); return; }
     if (!playing || !state.rec) return;
     var p = patAt(playPat), sd = stepDurFor(p), n = p.steps, now = ctx.currentTime - (ctx.outputLatency || 0);
     var step = ((Math.round(stepIdx - (baseTime - now) / sd) % n) + n) % n;
@@ -1626,6 +1646,10 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   DRUMS.forEach(function (d) { if (d.key && d.id !== 'roll') DRUM_KEYS[d.key.toLowerCase()] = d.id; });
   function typing(e) { var t = e.target; return t && (t.tagName === 'SELECT' || t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && t.type !== 'range')); }
   window.addEventListener('keydown', function (e) {
+    if (state.page === 'compose' && (e.ctrlKey || e.metaKey) && !e.altKey && !typing(e)) {
+      var kk = e.key.toLowerCase();
+      if (kk === 'z' || kk === 'y') { e.preventDefault(); if (kk === 'y' || e.shiftKey) redo(); else undo(); return; }
+    }
     if (e.ctrlKey || e.metaKey || e.altKey || typing(e)) return;
     if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) toggle(); return; }
     if (e.key in BEND_KEYS && !(e.target && e.target.tagName === 'INPUT')) {
@@ -1939,7 +1963,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     readLink(code).then(unpackSong).then(function (r) {
       if (!state.composeBackup) state.composeBackup = { song: state.compose, root: state.root, scale: state.scale };
       state.compose = C = r.song; state.root = r.root; state.scale = r.scale; autoQt();
-      cSel = null; cStart = 0; save();
+      cSel = null; cKeysSel = null; cStart = 0; save(); histReset();
       $('cShared').hidden = false; $('cSharedNote').textContent = (r.song.title ? '“' + r.song.title + '” is' : 'This is') + ' a song someone shared with you. Press Play to hear it. Your own song is kept safe.';
     }).catch(function () {
       $('cShared').hidden = false; $('cSharedNote').textContent = 'This song link is incomplete or damaged, so it could not be opened. Ask for the link again, and make sure all of it was copied.';
@@ -1968,6 +1992,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     while (cBase < ctx.currentTime + 0.12) {
       if (cStep >= total) { if (C.loop) cStep = 0; else { cEndAt = cBase; clearInterval(cTimer); cTimer = null; return; } }
       cStepAt(cStep, cBase, sd, anySolo);
+      if (state.cClick && cStep % 4 === 0) cClickAt(cBase, cStep % 16 === 0);
       cQ.push({ step: cStep, time: cBase, sd: sd });
       cStep++; cBase += sd;
     }
@@ -1998,7 +2023,13 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       $('cPlay').textContent = '■ Stop'; $('cPlay').classList.add('playing');
     });
   }
+  function cClickAt(t, accent) { // the click track: a short beep on each beat, higher on the first beat of the bar
+    var o = ctx.createOscillator(), g = ctx.createGain();
+    o.frequency.value = accent ? 1760 : 1320; g.gain.setValueAtTime(accent ? 0.22 : 0.13, t); g.gain.exponentialRampToValueAtTime(0.0005, t + 0.05);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.06);
+  }
   function cStop() {
+    if (cRec) cRecSet(false);
     cPlaying = false; clearInterval(cTimer); cTimer = null; cQ = [];
     $('cPlay').textContent = '▶ Play'; $('cPlay').classList.remove('playing');
     cPlayhead(cStart * 16);
@@ -2045,7 +2076,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     rl.addEventListener('click', function (e) { var r = rl.getBoundingClientRect(); cStart = Math.max(0, Math.min(C.bars - 1, Math.floor((e.clientX - r.left) / (r.width / C.bars)))); if (cPlaying) { cStop(); cPlay(); } cRender(); });
     ruler.appendChild(rh); ruler.appendChild(rl); tl.appendChild(ruler);
     C.tracks.forEach(function (tr) {
-      var row = el('div', 'tl-row' + (cSel && cSel.t === tr.id ? ' sel' : '')), head = el('div', 'tl-head'), lane = el('div', 'tl-lane');
+      var row = el('div', 'tl-row' + (cKeysSel === tr.id ? ' sel' : '')), head = el('div', 'tl-head'), lane = el('div', 'tl-lane');
       var top = el('div', 'hrow'), bot = el('div', 'hrow');
       if (tr.kind === 'mel') {
         var sel = el('select'); sel.setAttribute('aria-label', 'Sound of this track');
@@ -2066,6 +2097,8 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       vol.addEventListener('input', function () { tr.vol = +vol.value; cMix(); save(); });
       bot.appendChild(vol);
       head.appendChild(top); head.appendChild(bot);
+      head.title = 'Play ' + trackName(tr) + ' below';
+      head.addEventListener('click', function (e) { if (e.target.closest('select, button, input')) return; cKeysSel = tr.id; markSel(); });
       tr.clips.forEach(function (k) { lane.appendChild(clipEl(tr, k)); });
       wireLane(lane, tr);
       row.appendChild(head); row.appendChild(lane); tl.appendChild(row);
@@ -2074,7 +2107,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     if (document.activeElement !== $('cTitle')) $('cTitle').value = C.title || '';
     $('cBpmOut').textContent = C.bpm; $('cBpm').value = C.bpm; $('cBars').value = C.bars; $('cRoot').value = state.root; $('cScale').value = state.scale;
     $('cLoop').classList.toggle('sel', C.loop); $('cLoop').setAttribute('aria-pressed', C.loop);
-    cEditor();
+    cEditor(); cPlayArea(); markHist();
   }
   function wireLane(lane, tr) {
     var drag = null;
@@ -2105,7 +2138,8 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   }
   function markSel() {
     Array.prototype.forEach.call($('tl').querySelectorAll('.clip'), function (e) { e.classList.toggle('sel', !!cSel && e.dataset.c === cSel.c); });
-    Array.prototype.forEach.call($('tl').querySelectorAll('.tl-row'), function (r, i) { var t = C.tracks[i - 1]; r.classList.toggle('sel', !!t && !!cSel && t.id === cSel.t); });
+    Array.prototype.forEach.call($('tl').querySelectorAll('.tl-row'), function (r, i) { var t = C.tracks[i - 1]; r.classList.toggle('sel', !!t && t.id === cKeysSel); });
+    cPlayArea();
   }
   function refreshClip(tr, clip) {
     var e = $('tl').querySelector('.clip[data-c="' + clip.id + '"]'); if (!e) return;
@@ -2219,6 +2253,103 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     box.appendChild(el('p', 'hint', 'Click to add a note and drag right to make it longer. Drag a note to move it, drag its right edge to resize it, and tap it to remove it. The rows follow the key and maqam; the shaded rows are the key note. While this clip is picked, the computer keys play ' + tr.inst.toLowerCase() + '.'));
   }
 
+  // ---------- playing a track and recording into it ----------
+  // The panel of the picked track's instrument appears under the editor. With Record on, what you play
+  // is written into that track at the bar that is playing (a clip is made there if there is none).
+  var cRec = false, recOpen = {};
+  function cPlayArea() {
+    var on = state.page === 'compose', t = on && cKeysSel && C && cTrack(cKeysSel);
+    document.body.classList.toggle('play-perc', !!t && t.kind === 'perc');
+    document.body.classList.toggle('play-mel', !!t && t.kind === 'mel');
+    if (!on) return;
+    if (!t) {
+      $('cPlayTitle').textContent = 'Play an instrument';
+      $('cPlayHint').textContent = 'Pick a track (click its name or one of its clips) to play it here. Turn on Record while the song plays to write what you play into that track.';
+      return;
+    }
+    $('cPlayTitle').textContent = 'Play the ' + trackName(t).replace(/^Raï/, 'raï') + (cRec ? ': recording' : '');
+    $('cPlayHint').textContent = (t.kind === 'perc' ? 'Tap the drum below or use the computer keys.' : 'Play the instrument below or the computer keys. Notes land on the nearest note of the key and maqam.') +
+      ' With ● Record on, what you play is written into this track while the song plays, and loops add on top of each other.';
+    if (t.kind === 'perc') { if (state.perc !== t.inst) { state.perc = t.inst; renderSim(); } }
+    else { compTS(t); render(true); }
+  }
+  function cPos() { // where the song is now, in steps, allowing for the delay before sound reaches the speakers
+    var sd = 60 / C.bpm / 4, now = ctx.currentTime - (ctx.outputLatency || 0);
+    return cStep - (cBase - now) / sd;
+  }
+  function cWrap(step) { var n = C.bars * 16; return ((Math.round(step) % n) + n) % n; }
+  function cRecTrack(kind) { var t = cRec && cPlaying && cKeysSel && cTrack(cKeysSel); return t && t.kind === kind ? t : null; }
+  function clipFor(tr, bar) { // the clip at this bar, or a new one-bar clip if there is room
+    var k = clipAt(tr, bar); if (k) return k;
+    if (!fits(tr, null, bar, 1)) return null;
+    k = tr.kind === 'perc' ? percClip(tr.inst, bar, 1) : { start: bar, len: 1, notes: [] };
+    k.id = cNew('c'); tr.clips.push(k); cRender();
+    return k;
+  }
+  function recShow(tr, clip) { refreshClip(tr, clip); if (cSel && cSel.c === clip.id) cEditor(); save(); }
+  function cRecordHit(id) {
+    var tr = cRecTrack('perc'); if (!tr || KITS[tr.inst].strokes.indexOf(id) < 0) return;
+    var step = cWrap(cPos()), bar = Math.floor(step / 16), clip = clipFor(tr, bar); if (!clip) return;
+    var ls = (bar - clip.start) * 16 + step % 16;
+    if (!clip.steps[id][ls]) { clip.steps[id][ls] = true; recShow(tr, clip); }
+  }
+  function cRecNoteOn(key, midi) {
+    var tr = cRecTrack('mel'); if (!tr) return;
+    recOpen[key] = { tr: tr, pos: cPos(), midi: midi };
+  }
+  function cRecNoteOff(key) {
+    var r = recOpen[key]; if (!r) return; delete recOpen[key];
+    if (!cPlaying) return;
+    var tr = r.tr, s = cWrap(r.pos), len = Math.max(1, Math.round(cPos() - r.pos)), bar = Math.floor(s / 16), clip = clipFor(tr, bar); if (!clip) return;
+    var best = 0; for (var i = 1; i <= 14; i++) if (Math.abs(cMidi(tr, i) - r.midi) < Math.abs(cMidi(tr, best) - r.midi)) best = i;
+    var ls = (bar - clip.start) * 16 + s % 16;
+    while (ls + len > clip.len * 16 && fits(tr, clip, clip.start, clip.len + 1)) setLen(tr, clip, clip.len + 1); // a long note makes its clip longer
+    len = Math.min(len, clip.len * 16 - ls);
+    if (clip.notes.some(function (n) { return n.s === ls && n.r === best; })) return; // already there from an earlier pass
+    clip.notes.push({ s: ls, r: best, l: len }); recShow(tr, clip);
+  }
+  function cRecSet(on) {
+    cRec = on;
+    if (!on) { Object.keys(recOpen).forEach(cRecNoteOff); histPause(false); }
+    else histPause(true); // a whole take is one step in the undo history
+    $('cRec').classList.toggle('sel', on); $('cRec').setAttribute('aria-pressed', on); $('cRec').textContent = on ? '● Recording' : '● Record';
+    markHist(); cPlayArea();
+  }
+  $('cRec').addEventListener('click', function () {
+    if (cRec) { cRecSet(false); return; }
+    if (!cKeysSel) { var first = C.tracks[0]; if (first) cKeysSel = first.id; markSel(); }
+    cRecSet(true); if (!cPlaying) cPlay();
+  });
+  $('cClick').addEventListener('click', function () { state.cClick = !state.cClick; this.classList.toggle('sel', state.cClick); this.setAttribute('aria-pressed', state.cClick); save(); });
+
+  // ---------- undo and redo ----------
+  // Changes made within half a second of each other (a drag, a paint stroke) are one step.
+  var hist = { undo: [], redo: [], last: null, timer: null, paused: false };
+  function histSnap() { return JSON.stringify({ song: state.compose, root: state.root, scale: state.scale }); }
+  function histReset() { hist.undo = []; hist.redo = []; hist.last = histSnap(); markHist(); }
+  function histCommit() {
+    clearTimeout(hist.timer);
+    if (hist.paused || hist.last == null) return;
+    var now = histSnap(); if (now === hist.last) return;
+    hist.undo.push(hist.last); if (hist.undo.length > 100) hist.undo.shift();
+    hist.redo = []; hist.last = now; markHist();
+  }
+  function histSoon() { clearTimeout(hist.timer); hist.timer = setTimeout(histCommit, 500); }
+  function histPause(on) { if (on) { histCommit(); hist.paused = true; } else { hist.paused = false; histCommit(); } }
+  function histApply(snap) {
+    var o = JSON.parse(snap);
+    if (cPlaying) cStop();
+    state.compose = C = o.song; state.root = o.root; state.scale = o.scale; autoQt();
+    if (cSel && !cTrack(cSel.t)) cSel = null;
+    if (cKeysSel && !cTrack(cKeysSel)) cKeysSel = null;
+    hist.last = snap; cRender(); render(true); save(); markHist();
+  }
+  function undo() { histCommit(); if (!hist.undo.length || cRec) return; hist.redo.push(hist.last); histApply(hist.undo.pop()); }
+  function redo() { histCommit(); if (!hist.redo.length || cRec) return; hist.undo.push(hist.last); histApply(hist.redo.pop()); }
+  function markHist() { $('cUndo').disabled = cRec || !hist.undo.length; $('cRedo').disabled = cRec || !hist.redo.length; }
+  $('cUndo').addEventListener('click', undo);
+  $('cRedo').addEventListener('click', redo);
+
   // controls
   NOTE_NAMES.forEach(function (n, i) { var o = el('option', '', n); o.value = i; $('cRoot').appendChild(o); });
   Array.prototype.forEach.call($('scale').options, function (o) { $('cScale').appendChild(o.cloneNode(true)); });
@@ -2238,7 +2369,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var b = state.composeBackup; if (!b) return;
     if (cPlaying) cStop();
     state.compose = C = b.song; state.root = b.root; state.scale = b.scale; autoQt(); delete state.composeBackup;
-    $('cShared').hidden = true; cSel = null; save(); cRender(); render(true);
+    $('cShared').hidden = true; cSel = null; cKeysSel = null; save(); cRender(); render(true); histReset();
   });
   $('cHome').addEventListener('click', function () { cStart = 0; if (cPlaying) { cStop(); cPlay(); } else cRender(); });
   (function () {
@@ -2258,6 +2389,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   if (!validCompose(state.compose)) state.compose = demoCompose();
   if (state.composeBackup && !validCompose(state.composeBackup.song)) delete state.composeBackup;
   C = state.compose;
+  histReset();
   // ---------- instrument pages (#darbuka, #oud ...) ----------
   (function () {
     var a = el('a', 'chip', 'Studio'); a.href = '#'; a.dataset.page = ''; $('instNav').appendChild(a);
@@ -2279,11 +2411,13 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     $('focus').hidden = !g || g.kind === 'compose';
     $('composer').hidden = !(g && g.kind === 'compose');
     document.body.classList.toggle('page-compose', !!g && g.kind === 'compose');
+    if (cRec) cRecSet(false);
+    cPlayArea();
     Array.prototype.forEach.call($('instNav').children, function (c) { var on = c.dataset.page === state.page; c.classList.toggle('sel', on); if (on) c.setAttribute('aria-current', 'page'); else c.removeAttribute('aria-current'); });
     if (g) {
       $('fName').textContent = g.name;
       $('fAbout').innerHTML = g.about; // our own text, defined above
-      if (g.kind === 'compose') cRender();
+      if (g.kind === 'compose') { cRender(); $('cClick').classList.toggle('sel', !!state.cClick); $('cClick').setAttribute('aria-pressed', !!state.cClick); }
       else if (g.kind === 'perc') { state.perc = g.sim; renderSim(); }
       else {
         var solo = state.tracks.solo;
