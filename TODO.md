@@ -43,11 +43,13 @@ Once the recordings are in hand, they get trimmed, levelled and packed into the 
 
 ## Later
 
-- [ ] Download a song as an audio file (WAV).
-- [ ] Share a song as a link that plays exactly what was made.
-- [ ] Link preview image and description for sharing on social media.
-- [ ] Installable on phones, opening full-screen like an app.
-- [ ] README: a screenshot or short GIF and a "Play it live" link at the top.
+- [x] Download a song as an audio file (WAV).
+- [x] Share a song as a link that plays exactly what was made.
+- [x] Link preview image and description for sharing on social media.
+- [x] Installable on phones, opening full-screen like an app, and usable offline.
+- [x] README: screenshots and a "Play it now" link at the top.
+- [ ] Download and share for the studio's song too (today only the Compose page has them).
+- [ ] A short GIF of the app being played, for the README.
 - [ ] Studio: melody loops longer than one bar.
 - [ ] Compose: record live playing straight into a clip.
 - [ ] Compose: 6/8 time for the Tunisian rhythms that use it (fazzani, khatm, stambeli).

@@ -2,7 +2,16 @@
 
 Browser instruments for Tunisian percussion and raï music, built with the Web Audio API. There is nothing to install and no build step: each app is a single HTML file.
 
-**Play it:** <https://nadhemkhlij.github.io/Mousikaelektrouniya/>
+### ▶ [Play it now](https://nadhemkhlij.github.io/Mousikaelektrouniya/)
+
+![The Compose page: instruments on a timeline, with the oud's notes open in the editor](docs/screenshots/compose.png)
+
+<table>
+  <tr>
+    <td><img src="docs/screenshots/darbuka.png" alt="The darbuka page: a drum head with Dum, Slap, Tak and Ka zones"></td>
+    <td><img src="docs/screenshots/oud.png" alt="The oud page: a fretless neck with the notes of the maqam marked"></td>
+  </tr>
+</table>
 
 ## What's inside
 
@@ -24,6 +33,21 @@ Browser instruments for Tunisian percussion and raï music, built with the Web A
 
 Melodies follow Arabic maqamat (Hijaz, Kurd, Nahawand, Bayati, Rast, Ajam), including quarter tones.
 
+## Save and share your songs
+
+On the Compose page:
+
+- **⤓ Download audio** saves your song as a WAV file, ready to send or to open in other music software.
+- **Share a link** makes a link that holds the whole song. Anyone who opens it hears exactly what you made, with no account needed. On a phone it opens the share menu (WhatsApp, Messages and so on). Opening someone's song never deletes your own: you can keep theirs or go back to yours.
+
+## Install it on your phone
+
+Bendir & Raï can be installed like an app and works without a connection once it has been opened.
+
+- **Android (Chrome):** open the app, then tap the menu (⋮) and choose **Add to Home screen** or **Install app**.
+- **iPhone (Safari):** open the app, tap **Share**, then **Add to Home Screen**.
+- **Computer (Chrome or Edge):** click the install icon at the right of the address bar.
+
 ## Run it on your computer
 
 The sounds are loaded with `fetch`, so serve the folder over HTTP instead of opening the file directly. From the repository folder:
@@ -40,6 +64,9 @@ Then open <http://localhost:8000/>. Edit a file, save it and reload the page; th
 index.html              home page that links to everything
 bendir-rai/index.html   the main app: HTML, CSS and JavaScript in one file
 bendir-rai/s/*.json     sound packs (recordings, base64-encoded)
+bendir-rai/manifest.webmanifest, sw.js, icons/   what makes the app installable and usable offline
+og.png                  the picture shown when a link to the site is shared
+docs/screenshots/       the pictures in this README
 sixteen-steps/          the first prototype
 tools/build_packs.py    builds the sound packs
 tools/packs.json        where every sound in the packs comes from

@@ -59,6 +59,8 @@ These tables near the top of the script describe the music; most features read f
   - Song data lives in `state.compose`. Each track is `{ kind: 'perc' | 'mel', inst, vol, mute, solo, octave, clips }`.
   - A drum clip is `{ start, len, steps: { strokeId: [true/false per 16th note] } }`.
   - A melody clip is `{ start, len, notes: [{ s: step, r: scale degree, l: length in steps }] }`.
+- **download the song as a WAV file:** `renderSong` plays the whole song into an offline audio context (faster than real time) by building a second copy of the mixer with `buildGraph`, and `wavBlob` turns the result into a file.
+- **share a song as a link:** `packSong` writes the song in a compact form, which is compressed and placed after `#song=` in the link. `unpackSong` reads it back and checks every value, because a link can contain anything. Opening a shared song keeps the person's own song in `state.composeBackup` until they choose.
 - **instrument pages:** reads the address after `#` (for example `#oud`) and shows that page. Instrument pages use their own practice rhythm (`state.practice`) and voice (`state.tracks.solo`), so they never change the studio song.
 
 ### Saved data
@@ -108,6 +110,16 @@ Running `python3 tools/build_packs.py` with no options rebuilds every pack from 
 ### Add an instrument page
 
 Add an entry to `PAGES`. Percussion pages point at a `SIMS` key; melodic pages name a `SOUNDS` entry and a playing surface (`piano`, `oud` or `pipe`). The navigation and the address (`#your-page`) work automatically. Add the page to the list on the home page (`index.html`) too.
+
+### The installable app and link previews
+
+- `bendir-rai/manifest.webmanifest` names the app and its icons, which is what makes it installable.
+- `bendir-rai/sw.js` is the service worker that makes it work offline:
+  - the page itself is always fetched fresh when online, so changes show up straight away;
+  - sounds and fonts come from the cache and are refreshed in the background.
+
+  If you rename or remove a file listed in `CORE` at the top of `sw.js`, update that list. To force everyone's cache to clear, change `CACHE` (for example to `bendir-rai-v2`).
+- The link-preview tags (`og:` and `twitter:`) are in the `<head>` of `bendir-rai/index.html` and `index.html`. The preview picture is `og.png` (1200 × 630).
 
 ## Rules of the road
 

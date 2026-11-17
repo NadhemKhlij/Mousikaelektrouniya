@@ -182,6 +182,13 @@ kbd { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--li
 .clip svg { position: absolute; left: 4px; right: 12px; top: 18px; bottom: 4px; width: calc(100% - 16px); height: calc(100% - 22px); pointer-events: none; }
 .clip .grip { position: absolute; right: 0; top: 0; bottom: 0; width: 12px; cursor: ew-resize; background: linear-gradient(90deg, transparent 4px, var(--on-accent) 4px, var(--on-accent) 6px, transparent 6px); opacity: 0.6; }
 .playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--ink); z-index: 2; pointer-events: none; }
+.ctitle input { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); width: 220px; max-width: 100%; }
+.share-box { display: flex; flex-direction: column; gap: 6px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.share-row { display: flex; gap: 8px; min-width: 0; }
+.share-row input { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: 12px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); }
+.shared-note { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 14px; border-radius: 10px; background: var(--bg); border: 2px solid var(--accent); }
+.shared-note p { margin: 0; flex: 1 1 260px; font-weight: 600; }
+#cExportNote:empty { display: none; }
 .ceditor { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--line); padding-top: 12px; }
 .ced-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .ced-head h3 { font-family: var(--font-display); font-size: 17px; font-weight: 800; margin: 0 auto 0 0; }
@@ -319,6 +326,26 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
 }
 @media (prefers-reduced-motion: reduce) { .zl, .bpad { transition: none; } .ripple { animation-duration: 0.01s; } }
 </style>
+<meta name="description" content="Play the darbuka, oud, gasba and raï keyboard in your browser, compose songs with them, and share them as links.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Mousikaelektrouniya">
+<meta property="og:title" content="Bendir &amp; Raï">
+<meta property="og:description" content="Play the darbuka, oud, gasba and raï keyboard in your browser, compose songs with them, and share them as links.">
+<meta property="og:url" content="https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/">
+<meta property="og:image" content="https://nadhemkhlij.github.io/Mousikaelektrouniya/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Bendir &amp; Raï: a darbuka head with its Dum, Slap, Tak and Ka zones">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#14213d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bendir &amp; Raï">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body style="margin:0">
 <div class="wrap">
@@ -370,6 +397,21 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   <section class="panel composer" id="composer" aria-label="Compose" hidden>
     <div class="head"><h2>Compose</h2></div>
     <p class="hint">Each row is an instrument. Click an empty bar to add a clip, drag a clip to move it, drag its right edge to make it longer, and pick a clip to write its notes below. Press <kbd>Space</kbd> to play or stop.</p>
+    <div class="shared-note" id="cShared" role="status" hidden>
+      <p id="cSharedNote"></p>
+      <div class="chips"><button class="chip sel" id="cKeepShared" type="button">Keep this song</button><button class="chip" id="cBackMine" type="button">Back to my song</button></div>
+    </div>
+    <div class="ctop">
+      <div class="ctl ctitle"><label for="cTitle">Song title</label><input id="cTitle" type="text" maxlength="60" placeholder="My song" autocomplete="off"></div>
+      <button class="chip" id="cWav" type="button">⤓ Download audio</button>
+      <button class="chip" id="cShare" type="button">Share a link</button>
+    </div>
+    <div class="share-box" id="cShareBox" hidden>
+      <label class="lbl" for="cShareUrl">Link to your song</label>
+      <div class="share-row"><input id="cShareUrl" type="text" readonly><button class="chip" id="cCopy" type="button">Copy</button></div>
+      <p class="hint" id="cCopyNote">Anyone who opens it hears this version of your song. If you change the song, share a new link.</p>
+    </div>
+    <p class="hint" id="cExportNote" role="status"></p>
     <div class="ctop">
       <button class="play" id="cPlay" type="button">▶ Play</button>
       <button class="chip" id="cHome" type="button">⏮ Back to the start</button>
@@ -719,6 +761,12 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
     var AC = window.AudioContext || window.webkitAudioContext;
     ctx = new AC({ latencyHint: 'interactive' });
+    buildGraph();
+    applyMix(); loadSounds();
+    requestAnimationFrame(frame);
+  }
+  // The mixer and effects. Built once for the live context, and again for each song rendered to a file.
+  function buildGraph() {
     master = ctx.createGain();
     var comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -10; comp.ratio.value = 4; comp.attack.value = 0.005; comp.release.value = 0.15;
@@ -738,8 +786,6 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var buf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), data = buf.getChannelData(0);
     for (var i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
     noise = buf;
-    applyMix(); loadSounds();
-    requestAnimationFrame(frame);
   }
   // wake the audio engine on the very first touch so the first tap already sounds right
   ['pointerdown', 'keydown'].forEach(function (ev) { window.addEventListener(ev, ensureAudio, { capture: true, once: true }); });
@@ -1729,7 +1775,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       [[0, 7, 2], [2, 9, 2], [4, 10, 2], [6, 9, 2], [8, 7, 2], [10, 6, 2], [12, 7, 4], [16, 5, 2], [18, 6, 2], [20, 7, 2], [22, 6, 2], [24, 5, 2], [26, 4, 2], [28, 5, 4]].forEach(function (n) { on.push({ s: o + n[0], r: n[1], l: n[2] }); });
     });
     clip(oud, { start: 0, len: 4, notes: on });
-    var lead = add('mel', 'Raï lead', 70, 4);
+    var lead = add('mel', 'Raï lead', 92, 4);
     clip(lead, { start: 4, len: 4, notes: [[0, 4, 3], [3, 5, 1], [4, 4, 2], [6, 3, 2], [8, 2, 4], [12, 1, 2], [14, 2, 2], [16, 0, 6], [24, 2, 2], [26, 3, 2], [28, 4, 4],
       [32, 7, 3], [35, 6, 1], [36, 5, 2], [38, 4, 2], [40, 3, 4], [44, 4, 2], [46, 3, 2], [48, 2, 2], [50, 1, 2], [52, 0, 8]].map(function (n) { return { s: n[0], r: n[1], l: n[2] }; }) });
     return c;
@@ -1757,6 +1803,152 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       trackOut[t.id].gain.setTargetAtTime(on ? Math.pow(t.vol / 100, 2) : 0, ctx.currentTime, 0.02);
     });
   }
+
+  // ---------- download the song as a WAV file ----------
+  function songEnd() { // the bar after the last clip that is heard
+    var anySolo = C.tracks.some(function (t) { return t.solo; }), end = 0;
+    C.tracks.forEach(function (t) { if (t.mute || (anySolo && !t.solo)) return; t.clips.forEach(function (k) { end = Math.max(end, k.start + k.len); }); });
+    return Math.min(end, C.bars);
+  }
+  function renderSong() {
+    ensureAudio();
+    return loadSounds().then(function () {
+      var sd = 60 / C.bpm / 4, bars = songEnd(), lead = 0.3, tail = 2.5, sr = ctx.sampleRate;
+      var off = new OfflineAudioContext(2, Math.ceil((lead + bars * 16 * sd + tail) * sr), sr);
+      var live = { ctx: ctx, master: master, drumBus: drumBus, synthBus: synthBus, delayNode: delayNode, analyser: analyser, noise: noise, bendSrc: bendSrc, trackOut: trackOut, trackSend: trackSend };
+      try {
+        ctx = off; trackOut = {}; trackSend = {};
+        buildGraph(); applyMix();
+        var anySolo = C.tracks.some(function (t) { return t.solo; });
+        C.tracks.forEach(function (t) { if (t.kind === 'mel') compTS(t); ensureOut(t.id); });
+        for (var i = 0; i < bars * 16; i++) cStepAt(i, lead + i * sd, sd, anySolo);
+      } finally { // put the live engine back before anything else can play
+        ctx = live.ctx; master = live.master; drumBus = live.drumBus; synthBus = live.synthBus; delayNode = live.delayNode;
+        analyser = live.analyser; noise = live.noise; bendSrc = live.bendSrc; trackOut = live.trackOut; trackSend = live.trackSend;
+      }
+      return off.startRendering().then(function (buf) { return { buf: buf, skip: lead - 0.05 }; });
+    });
+  }
+  function wavBlob(buf, skip) {
+    var sr = buf.sampleRate, from = Math.max(0, Math.floor(skip * sr)), n = buf.length - from, chans = [buf.getChannelData(0), buf.getChannelData(1)];
+    var peak = 0, i, c;
+    for (c = 0; c < 2; c++) for (i = from; i < buf.length; i++) peak = Math.max(peak, Math.abs(chans[c][i]));
+    var gain = peak > 0.001 ? 0.891 / peak : 1; // the loudest moment lands just under full scale (-1 dB)
+    var out = new DataView(new ArrayBuffer(44 + n * 4)), w = function (o, str) { for (var k = 0; k < str.length; k++) out.setUint8(o + k, str.charCodeAt(k)); };
+    w(0, 'RIFF'); out.setUint32(4, 36 + n * 4, true); w(8, 'WAVE'); w(12, 'fmt '); out.setUint32(16, 16, true); out.setUint16(20, 1, true);
+    out.setUint16(22, 2, true); out.setUint32(24, sr, true); out.setUint32(28, sr * 4, true); out.setUint16(32, 4, true); out.setUint16(34, 16, true);
+    w(36, 'data'); out.setUint32(40, n * 4, true);
+    for (i = 0; i < n; i++) for (c = 0; c < 2; c++) {
+      var v = Math.max(-1, Math.min(1, chans[c][from + i] * gain));
+      out.setInt16(44 + (i * 2 + c) * 2, v < 0 ? v * 0x8000 : v * 0x7fff, true);
+    }
+    return new Blob([out], { type: 'audio/wav' });
+  }
+  function fileName(ext) { // plain letters only: some browsers drop names with accents or other scripts
+    var n = (C.title || 'my song').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return (n || 'bendir-rai-song') + '.' + ext;
+  }
+  function downloadSong() {
+    var b = $('cWav'), note = $('cExportNote');
+    if (!songEnd()) { note.textContent = 'Add a clip first: there is nothing to save yet.'; return; }
+    b.disabled = true; b.textContent = 'Preparing the file…'; note.textContent = '';
+    renderSong().then(function (r) {
+      var blob = wavBlob(r.buf, r.skip), url = URL.createObjectURL(blob), a = el('a');
+      a.href = url; a.download = fileName('wav'); document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+      note.textContent = 'Saved ' + a.download + ' (' + Math.round(r.buf.duration - r.skip) + ' seconds). If nothing downloaded, your browser may have blocked it: try the live site.';
+    }).catch(function () {
+      note.textContent = 'The file could not be made in this browser. Try the latest Chrome, Firefox or Safari.';
+    }).then(function () { b.disabled = false; b.textContent = '⤓ Download audio'; });
+  }
+
+  // ---------- share a song as a link ----------
+  // The whole song travels inside the link (after #song=), compressed, so no server is needed.
+  function b64url(bytes) { var s2 = ''; for (var i = 0; i < bytes.length; i++) s2 += String.fromCharCode(bytes[i]); return btoa(s2).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function unb64url(str) { var b = atob(str.replace(/-/g, '+').replace(/_/g, '/')), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+  function streamBytes(bytes, stream) { return new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer().then(function (ab) { return new Uint8Array(ab); }); }
+  function bitsHex(a, n) { var h = ''; for (var i = 0; i < n; i += 4) h += ((a[i] ? 8 : 0) | (a[i + 1] ? 4 : 0) | (a[i + 2] ? 2 : 0) | (a[i + 3] ? 1 : 0)).toString(16); return h.replace(/0+$/, ''); }
+  function hexBits(h, n) { var a = new Array(n).fill(false); for (var i = 0; i < h.length && i * 4 < n; i++) { var d = parseInt(h[i], 16) || 0; for (var j = 0; j < 4; j++) if (i * 4 + j < n) a[i * 4 + j] = !!(d & (8 >> j)); } return a; }
+  function packSong() {
+    return JSON.stringify({ v: 1, tt: C.title || '', b: C.bpm, n: C.bars, l: C.loop ? 1 : 0, k: state.root, m: state.scale, t: C.tracks.map(function (tr) {
+      var o = { k: tr.kind === 'perc' ? 0 : 1, i: tr.inst, v: tr.vol, o: tr.octave || 0, c: tr.clips.map(function (c) {
+        return [c.start, c.len, tr.kind === 'perc' ? KITS[tr.inst].strokes.map(function (id) { return bitsHex(c.steps[id] || [], c.len * 16); })
+          : [].concat.apply([], c.notes.map(function (n) { return [n.s, n.r, n.l]; }))];
+      }) };
+      if (tr.mute) o.x = 1; if (tr.solo) o.y = 1;
+      return o;
+    }) });
+  }
+  function int(v, lo, hi) { v = Math.round(+v); if (!isFinite(v) || v < lo || v > hi) throw new Error('out of range'); return v; }
+  function unpackSong(json) { // checks everything, since a link can contain anything
+    var o = JSON.parse(json), saved = C;
+    if (o.v !== 1 || !Array.isArray(o.t) || o.t.length > 12 || !SCALES[o.m]) throw new Error('not a song');
+    var c = { bpm: int(o.b, 50, 180), bars: [8, 16, 32].indexOf(+o.n) >= 0 ? +o.n : 8, loop: !!o.l, title: String(o.tt || '').slice(0, 60), tracks: [], nid: 0 };
+    C = c;
+    try {
+      o.t.forEach(function (t) {
+        var perc = t.k === 0;
+        if (perc ? !KITS[t.i] : !SOUNDS[t.i]) throw new Error('unknown instrument');
+        var tr = { id: cNew('t'), kind: perc ? 'perc' : 'mel', inst: t.i, vol: int(t.v, 0, 100), mute: !!t.x, solo: !!t.y, octave: perc ? 0 : int(t.o, 1, 6), clips: [] };
+        (t.c || []).forEach(function (a) {
+          var start = int(a[0], 0, c.bars - 1), len = int(a[1], 1, c.bars - start), cols = len * 16, k = { id: cNew('c'), start: start, len: len };
+          if (!fits(tr, null, start, len)) return;
+          if (perc) { k.steps = {}; KITS[t.i].strokes.forEach(function (id, j) { k.steps[id] = hexBits(String((a[2] || [])[j] || '').replace(/[^0-9a-f]/gi, ''), cols); }); }
+          else { var f = a[2] || [], notes = []; for (var j = 0; j + 2 < f.length && notes.length < 2000; j += 3) notes.push({ s: int(f[j], 0, cols - 1), r: int(f[j + 1], 0, 14), l: int(f[j + 2], 1, cols) }); k.notes = notes; }
+          tr.clips.push(k);
+        });
+        c.tracks.push(tr);
+      });
+    } finally { C = saved; }
+    return { song: c, root: int(o.k, 0, 11), scale: o.m };
+  }
+  function songLink() {
+    var json = packSong(), base = location.href.split('#')[0];
+    var done = function (code) { return base + '#song=' + code; };
+    if (window.CompressionStream) return streamBytes(new TextEncoder().encode(json), new CompressionStream('deflate-raw')).then(function (z) { return done('z' + b64url(z)); });
+    return Promise.resolve(done('j' + b64url(new TextEncoder().encode(json))));
+  }
+  function readLink(code) {
+    var kind = code[0], bytes = unb64url(code.slice(1));
+    if (kind === 'z') {
+      if (!window.DecompressionStream) return Promise.reject(new Error('This browser cannot open compressed links.'));
+      return streamBytes(bytes, new DecompressionStream('deflate-raw')).then(function (u) { return new TextDecoder().decode(u); });
+    }
+    if (kind === 'j') return Promise.resolve(new TextDecoder().decode(bytes));
+    return Promise.reject(new Error('unknown link'));
+  }
+  function shareSong() {
+    var box = $('cShareBox'), inp = $('cShareUrl'), note = $('cExportNote');
+    note.textContent = '';
+    songLink().then(function (url) {
+      box.hidden = false; inp.value = url;
+      if (navigator.share && matchMedia('(pointer: coarse)').matches) { // phones: open the share sheet (WhatsApp, Messages ...)
+        navigator.share({ title: C.title || 'My song', text: 'Listen to my song, made with Bendir & Raï', url: url }).catch(function () {});
+        return;
+      }
+      copyLink();
+    }).catch(function () { note.textContent = 'The link could not be made in this browser.'; });
+  }
+  function copyLink() {
+    var inp = $('cShareUrl'), st = $('cCopyNote');
+    var fallback = function () { inp.focus(); inp.select(); st.textContent = 'The link is selected: copy it with Ctrl+C (⌘+C on a Mac), or your phone\'s Copy option.'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(inp.value).then(function () { st.textContent = 'Link copied. Paste it anywhere to share your song.'; }, fallback);
+    else fallback();
+  }
+  function openShared(code) {
+    readLink(code).then(unpackSong).then(function (r) {
+      if (!state.composeBackup) state.composeBackup = { song: state.compose, root: state.root, scale: state.scale };
+      state.compose = C = r.song; state.root = r.root; state.scale = r.scale; autoQt();
+      cSel = null; cStart = 0; save();
+      $('cShared').hidden = false; $('cSharedNote').textContent = (r.song.title ? '“' + r.song.title + '” is' : 'This is') + ' a song someone shared with you. Press Play to hear it. Your own song is kept safe.';
+    }).catch(function () {
+      $('cShared').hidden = false; $('cSharedNote').textContent = 'This song link is incomplete or damaged, so it could not be opened. Ask for the link again, and make sure all of it was copied.';
+      $('cKeepShared').hidden = true; $('cBackMine').hidden = true;
+    }).then(function () {
+      history.replaceState(null, '', location.pathname + location.search + '#compose');
+      state.page = 'compose'; applyPage(); window.scrollTo(0, 0);
+    });
+  }
   function cMidi(tr, r) { var sc = SCALES[state.scale]; return 12 * (tr.octave + 1) + state.root + sc[r % 7] + 12 * Math.floor(r / 7); }
   function cKeysTrack() { var t = cKeysSel && C && cTrack(cKeysSel); if (t && t.kind === 'mel') { compTS(t); return t.id; } return 'solo'; }
   function clipAt(tr, bar) { return tr.clips.filter(function (k) { return bar >= k.start && bar < k.start + k.len; })[0]; }
@@ -1775,23 +1967,26 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var sd = 60 / C.bpm / 4, total = C.bars * 16, anySolo = C.tracks.some(function (t) { return t.solo; });
     while (cBase < ctx.currentTime + 0.12) {
       if (cStep >= total) { if (C.loop) cStep = 0; else { cEndAt = cBase; clearInterval(cTimer); cTimer = null; return; } }
-      var bar = Math.floor(cStep / 16), st = cStep % 16, t = cBase, vel = st % 4 === 0 ? 1 : 0.8;
-      C.tracks.forEach(function (tr) {
-        if (tr.mute || (anySolo && !tr.solo)) return;
-        var clip = clipAt(tr, bar); if (!clip) return;
-        var ls = (bar - clip.start) * 16 + st;
-        if (tr.kind === 'perc') {
-          drumDest = ensureOut(tr.id); rollLen = sd;
-          KITS[tr.inst].strokes.forEach(function (id) { if (clip.steps[id] && clip.steps[id][ls]) hit(id, t, vel); });
-          drumDest = null;
-        } else {
-          compTS(tr); ensureOut(tr.id);
-          clip.notes.forEach(function (n) { if (n.s === ls) playNote(tr.id, cMidi(tr, n.r), t, Math.min(n.l, clip.len * 16 - n.s) * sd * 0.95, false, 0.85); });
-        }
-      });
-      cQ.push({ step: cStep, time: t, sd: sd });
+      cStepAt(cStep, cBase, sd, anySolo);
+      cQ.push({ step: cStep, time: cBase, sd: sd });
       cStep++; cBase += sd;
     }
+  }
+  function cStepAt(step, t, sd, anySolo) {
+    var bar = Math.floor(step / 16), st = step % 16, vel = st % 4 === 0 ? 1 : 0.8;
+    C.tracks.forEach(function (tr) {
+      if (tr.mute || (anySolo && !tr.solo)) return;
+      var clip = clipAt(tr, bar); if (!clip) return;
+      var ls = (bar - clip.start) * 16 + st;
+      if (tr.kind === 'perc') {
+        drumDest = ensureOut(tr.id); rollLen = sd;
+        KITS[tr.inst].strokes.forEach(function (id) { if (clip.steps[id] && clip.steps[id][ls]) hit(id, t, vel); });
+        drumDest = null;
+      } else {
+        compTS(tr); ensureOut(tr.id);
+        clip.notes.forEach(function (n) { if (n.s === ls) playNote(tr.id, cMidi(tr, n.r), t, Math.min(n.l, clip.len * 16 - n.s) * sd * 0.95, false, 0.85); });
+      }
+    });
   }
   function cPlay() {
     ensureAudio();
@@ -1876,6 +2071,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       row.appendChild(head); row.appendChild(lane); tl.appendChild(row);
     });
     playheadEl = el('div', 'playhead'); tl.appendChild(playheadEl); cPlayhead(cPlaying && cLast ? cLast.step : cStart * 16);
+    if (document.activeElement !== $('cTitle')) $('cTitle').value = C.title || '';
     $('cBpmOut').textContent = C.bpm; $('cBpm').value = C.bpm; $('cBars').value = C.bars; $('cRoot').value = state.root; $('cScale').value = state.scale;
     $('cLoop').classList.toggle('sel', C.loop); $('cLoop').setAttribute('aria-pressed', C.loop);
     cEditor();
@@ -2032,6 +2228,18 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   $('cBars').addEventListener('change', function () { C.bars = +this.value; cStart = Math.min(cStart, C.bars - 1); cRender(); save(); });
   $('cLoop').addEventListener('click', function () { C.loop = !C.loop; cRender(); save(); });
   $('cPlay').addEventListener('click', cToggle);
+  $('cWav').addEventListener('click', downloadSong);
+  $('cShare').addEventListener('click', shareSong);
+  $('cCopy').addEventListener('click', copyLink);
+  $('cShareUrl').addEventListener('focus', function () { this.select(); });
+  $('cTitle').addEventListener('input', function () { C.title = this.value.slice(0, 60); $('cShareBox').hidden = true; save(); });
+  $('cKeepShared').addEventListener('click', function () { delete state.composeBackup; $('cShared').hidden = true; save(); });
+  $('cBackMine').addEventListener('click', function () {
+    var b = state.composeBackup; if (!b) return;
+    if (cPlaying) cStop();
+    state.compose = C = b.song; state.root = b.root; state.scale = b.scale; autoQt(); delete state.composeBackup;
+    $('cShared').hidden = true; cSel = null; save(); cRender(); render(true);
+  });
   $('cHome').addEventListener('click', function () { cStart = 0; if (cPlaying) { cStop(); cPlay(); } else cRender(); });
   (function () {
     var add = $('cAdd'), o = el('option', '', 'Choose…'); o.value = ''; add.appendChild(o);
@@ -2048,6 +2256,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   })();
 
   if (!validCompose(state.compose)) state.compose = demoCompose();
+  if (state.composeBackup && !validCompose(state.composeBackup.song)) delete state.composeBackup;
   C = state.compose;
   // ---------- instrument pages (#darbuka, #oud ...) ----------
   (function () {
@@ -2087,15 +2296,18 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     lastPage = state.page;
     render(); applyMix();
   }
-  function route() { var h = location.hash.replace('#', ''); state.page = PAGES[h] ? h : ''; applyPage(); if (state.page) window.scrollTo(0, 0); }
+  function route() {
+    var h = location.hash.replace('#', '');
+    if (/^song=/.test(h)) { openShared(h.slice(5)); return; }
+    state.page = PAGES[h] ? h : ''; applyPage(); if (state.page) window.scrollTo(0, 0);
+  }
   window.addEventListener('hashchange', route);
 
   buildPiano();
   renderChain();
   if (!SIMS[state.perc]) state.perc = 'darbuka';
   renderSim();
-  state.page = PAGES[location.hash.replace('#', '')] ? location.hash.replace('#', '') : '';
-  applyPage();
+  route();
 
   // ---------- playhead, pad flashes, scope ----------
   var scope = $('scope'), g2 = scope.getContext('2d'), wave = new Uint8Array(1024), tick = 0, stroke = '#888';
@@ -2123,6 +2335,10 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     g2.stroke();
   }
 })();
+</script>
+<script>
+  // installable app and offline use (see sw.js)
+  if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
 </script>
 </body>
 </html>
