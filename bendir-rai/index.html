@@ -214,6 +214,12 @@ kbd { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--li
 .gb-grid .rootrow { color: var(--accent); }
 .gb-filter input { width: 220px; }
 #gbRec.sel { background: var(--drum); border-color: var(--drum); color: var(--on-accent); }
+.gb-patrow .pat { position: relative; }
+.gb-patrow .pat.playing::after { content: ""; position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--drum); }
+.gb-patrow .pat.sel.playing::after { background: var(--on-accent); }
+.gb-patrow .pat.queued { outline: 2px dashed var(--drum); outline-offset: 2px; animation: cue 0.5s steps(2, jump-none) infinite; }
+@keyframes cue { from { outline-color: var(--drum); } to { outline-color: transparent; } }
+@media (prefers-reduced-motion: reduce) { .gb-patrow .pat.queued { animation: none; } }
 @media (max-width: 720px) { .gb-pads { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; } .gb-pads .bpad { min-height: 52px; font-size: 11px; padding: 4px; } .gb-pads .bpad small { display: none; } .gb-grid { grid-template-columns: 70px repeat(16, 26px); } }
 .cplay { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 4px; }
 .cplay h3 { font-family: var(--font-display); font-size: 17px; font-weight: 800; margin: 0; }
@@ -478,7 +484,13 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       <div class="ctl"><label for="gbBpm">Tempo <output id="gbBpmOut">128</output> BPM</label><input id="gbBpm" type="range" min="60" max="160" step="1"></div>
       <div class="ctl"><label for="gbSwing">Swing <output id="gbSwingOut">0</output>%</label><input id="gbSwing" type="range" min="0" max="60" step="1"></div>
     </div>
-    <div class="ctl"><span class="lbl">Start from a style</span><div class="chips" id="gbPresets"></div></div>
+    <div class="song-row gb-patrow">
+      <div class="ctl"><span class="lbl">Pattern</span><div class="chips" id="gbPats"></div></div>
+      <button class="chip" id="gbChain" type="button" aria-pressed="false">Chain the patterns</button>
+      <div class="ctl"><label for="gbCopy">Copy this pattern to</label><select id="gbCopy"><option value="">Choose…</option></select></div>
+    </div>
+    <p class="hint" id="gbPatHint" role="status"></p>
+    <div class="ctl"><span class="lbl">Start from a style (fills the pattern you're on)</span><div class="chips" id="gbPresets"></div></div>
     <div class="gb-pads" id="gbPads"></div>
 
     <div class="gb-part drums-part">
@@ -2574,29 +2586,49 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       return { on: true, n: n % 12, o: Math.floor(n / 12) + (f.indexOf('^') >= 0 ? 1 : 0) - (f.indexOf('v') >= 0 ? 1 : 0), a: f.indexOf('a') >= 0, s: f.indexOf('s') >= 0 };
     });
   }
+  // Four patterns (A to D) hold the drums, accents and bass line; the sound settings are shared, as on the hardware.
+  var GB_LETTERS = ['A', 'B', 'C', 'D'];
+  function gbBlankPat() { var d = {}; GB_VOICES.forEach(function (id) { d[id] = new Array(16).fill(false); }); return { name: '', drums: d, accent: new Array(16).fill(false), bass: gbBlankBass() }; }
+  function EP() { return state.gb.pats[state.gb.edit]; } // the pattern being edited
+  function patFilled(p) { return GB_VOICES.some(function (id) { return p.drums[id].some(Boolean); }) || p.bass.some(function (b) { return b.on; }); }
   function gbDefault() {
-    var g = { bpm: 128, swing: 0, root: 9, preset: '', drums: {}, accent: new Array(16).fill(false), bass: gbBlankBass(), bassMute: false, kit: {},
+    var g = { bpm: 128, swing: 0, root: 9, pats: [gbBlankPat(), gbBlankPat(), gbBlankPat(), gbBlankPat()], edit: 0, chain: false, bassMute: false, kit: {},
       synth: { wave: 'sawtooth', cut: 25, res: 60, env: 50, dec: 30, acc: 50, drive: 30, vol: 70 }, fx: { filter: 0, echo: 20, verb: 15 } };
-    GB_VOICES.forEach(function (id) { g.drums[id] = new Array(16).fill(false); g.kit[id] = { tune: 0, decay: 1, mute: false }; });
+    GB_VOICES.forEach(function (id) { g.kit[id] = { tune: 0, decay: 1, mute: false }; });
     return g;
   }
-  function gbLoad(name) {
-    var pr = GB_PRESETS[name], g = state.gb;
-    g.bpm = pr.bpm; g.swing = pr.swing; g.root = pr.root; g.preset = name;
+  function gbMigrate(g) { // songs saved before patterns existed keep their one pattern as A
+    if (!g || g.pats || !g.drums) return;
+    var a = { name: g.preset || '', drums: g.drums, accent: g.accent, bass: g.bass };
+    g.pats = [a, gbBlankPat(), gbBlankPat(), gbBlankPat()]; g.edit = 0; g.chain = false;
+    delete g.drums; delete g.accent; delete g.bass; delete g.preset;
+  }
+  function gbVariation(a) { // a B pattern for first-time visitors: the same groove with open hats, a snare fill and the bass a fourth higher
+    var b = JSON.parse(JSON.stringify(a));
+    b.name = a.name ? a.name + ' variation' : '';
+    for (var i = 0; i < 16; i++) { if (i % 4 === 2) b.drums.ohat[i] = true; if (i >= 12) b.drums.snare[i] = true; }
+    b.drums.hat = b.drums.hat.map(function (v, i) { return v && i % 4 !== 2; });
+    b.bass.forEach(function (s2) { if (s2.on) { var n = s2.n + 5; s2.n = n % 12; s2.o += Math.floor(n / 12); } });
+    return b;
+  }
+  function gbLoad(name) { // a style sets the shared sound and fills the pattern being edited
+    var pr = GB_PRESETS[name], g = state.gb, pt = EP();
+    g.bpm = pr.bpm; g.swing = pr.swing; g.root = pr.root; pt.name = name;
     GB_VOICES.forEach(function (id) {
-      var pat = pr.d[id] || ''; g.drums[id] = new Array(16).fill(false).map(function (x, i) { return pat[i] === 'x'; });
+      var pat = pr.d[id] || ''; pt.drums[id] = new Array(16).fill(false).map(function (x, i) { return pat[i] === 'x'; });
       var k = pr.kit[id] || [0, 1]; g.kit[id] = { tune: k[0], decay: k[1], mute: false };
       state.levels[id] = pr.lv[id] != null ? pr.lv[id] : 70;
     });
-    g.accent = new Array(16).fill(false).map(function (x, i) { return pr.acc[i] === 'x'; });
-    g.bass = gbParseBass(pr.bass); g.bassMute = false;
+    pt.accent = new Array(16).fill(false).map(function (x, i) { return pr.acc[i] === 'x'; });
+    pt.bass = gbParseBass(pr.bass); g.bassMute = false;
     for (var k2 in pr.synth) g.synth[k2] = pr.synth[k2];
     g.fx = { filter: pr.fx[0], echo: pr.fx[1], verb: pr.fx[2] };
   }
   function gbValid(g) {
     try {
-      return !!g && Array.isArray(g.bass) && g.bass.length === 16 && Array.isArray(g.accent) && g.accent.length === 16 && g.synth && g.fx && g.kit &&
-        GB_VOICES.every(function (id) { return g.drums[id] && g.drums[id].length === 16 && g.kit[id]; });
+      return !!g && Array.isArray(g.pats) && g.pats.length === 4 && g.edit >= 0 && g.edit < 4 && g.synth && g.fx && g.kit &&
+        GB_VOICES.every(function (id) { return !!g.kit[id]; }) &&
+        g.pats.every(function (p) { return p.bass && p.bass.length === 16 && p.accent && p.accent.length === 16 && GB_VOICES.every(function (id) { return p.drums[id] && p.drums[id].length === 16; }); });
     } catch (e) { return false; }
   }
 
@@ -2662,44 +2694,76 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
 
   // sequencer
   var gbPlaying = false, gbTimer = null, gbStep = 0, gbBase = 0, gbQ = [], gbSkip = {}, gbShown = -1, gbRec = false;
-  function gbStepAt(i, t, sd, dest) {
-    var g = state.gb, vel = g.accent[i] ? 1.3 : 0.85;
+  var gbPlayIdx = 0, gbQueued = null, gbPrevBass = null, gbFirstBar = true;
+  // One step of a pattern. `next` is the pattern that plays after this one, so a slide on the last step
+  // can glide into the next bar even when the pattern changes there.
+  function gbStepAt(pat, i, t, sd, dest, next) {
+    var g = state.gb, vel = pat.accent[i] ? 1.3 : 0.85;
     drumDest = dest; rollLen = sd;
-    GB_VOICES.forEach(function (id) { if (g.drums[id][i] && !g.kit[id].mute && !(gbSkip[id] > t)) hit(id, t, vel); });
+    GB_VOICES.forEach(function (id) { if (pat.drums[id][i] && !g.kit[id].mute && !(gbSkip[id] > t)) hit(id, t, vel); });
     drumDest = null;
-    var b = g.bass[i];
+    var b = pat.bass[i], prev = gbPrevBass;
+    gbPrevBass = b.on && !g.bassMute ? b : null;
     if (b.on && !g.bassMute) {
-      var prev = g.bass[(i + 15) % 16], next = g.bass[(i + 1) % 16], slideOut = b.s && next.on;
-      acidNote(t, gbMidi(b), slideOut ? sd * 1.05 : sd * 0.55, b.a, prev.on && prev.s, dest);
+      var nb = i < 15 ? pat.bass[i + 1] : (next || pat).bass[0], slideOut = b.s && nb.on;
+      acidNote(t, gbMidi(b), slideOut ? sd * 1.05 : sd * 0.55, b.a, !!prev && prev.s, dest);
     }
+  }
+  function gbNextFilled(i) { for (var k = 1; k <= 4; k++) { var j = (i + k) % 4; if (patFilled(state.gb.pats[j])) return j; } return i; }
+  function gbUpcoming() { return gbQueued != null ? gbQueued : state.gb.chain ? gbNextFilled(gbPlayIdx) : gbPlayIdx; }
+  function gbSequence(bars) { // which pattern plays in each bar, for downloads and Compose
+    var g = state.gb, seq = [], i = g.chain ? (patFilled(g.pats[0]) ? 0 : gbNextFilled(0)) : g.edit;
+    for (var b = 0; b < bars; b++) { seq.push(i); if (g.chain) i = gbNextFilled(i); }
+    return seq;
   }
   function gbSched() {
     var g = state.gb, sd = 60 / g.bpm / 4;
     while (gbBase < ctx.currentTime + 0.12) {
+      if (gbStep === 0) { // the start of a bar: switch pattern here, so the beat never breaks
+        if (gbFirstBar) gbFirstBar = false;
+        else { var nx = gbUpcoming(); gbQueued = null; gbPlayIdx = nx; }
+      }
       var t = gbBase + (gbStep % 2 ? g.swing / 100 * sd * 0.66 : 0);
-      gbStepAt(gbStep, t, sd, GBN.input);
-      gbQ.push({ step: gbStep, time: t });
+      gbStepAt(g.pats[gbPlayIdx], gbStep, t, sd, GBN.input, gbStep === 15 ? g.pats[gbUpcoming()] : null);
+      gbQ.push({ step: gbStep, time: t, pat: gbPlayIdx });
       gbStep = (gbStep + 1) % 16; gbBase += sd;
     }
   }
   function gbPlay() {
     ensureAudio(); if (playing) stop(); if (cPlaying) cStop();
-    gbPlaying = true; gbStep = 0; gbBase = ctx.currentTime + 0.06; gbQ = []; acidV = null; applyGb();
+    gbPlaying = true; gbStep = 0; gbBase = ctx.currentTime + 0.06; gbQ = []; acidV = null; gbPrevBass = null; applyGb();
+    gbPlayIdx = state.gb.edit; gbQueued = null; gbFirstBar = true; gbHeard = gbPlayIdx;
     gbSched(); gbTimer = setInterval(gbSched, 25);
     $('gbPlay').textContent = '■ Stop'; $('gbPlay').classList.add('playing');
   }
   function gbStop() {
-    gbPlaying = false; clearInterval(gbTimer); gbTimer = null; gbQ = []; gbShowStep(-1);
+    gbPlaying = false; clearInterval(gbTimer); gbTimer = null; gbQ = []; gbShowStep(-1); gbQueued = null; gbHeard = -1; gbMarkPats();
     if (gbRec) gbSetRec(false);
     $('gbPlay').textContent = '▶ Play'; $('gbPlay').classList.remove('playing');
   }
   function gbToggle() { gbPlaying ? gbStop() : gbPlay(); }
-  function gbFrame() { var cur = null; while (gbQ.length && gbQ[0].time <= ctx.currentTime) cur = gbQ.shift(); if (cur) gbShowStep(cur.step); }
+  function gbPick(i) { // edit this pattern; while playing, it also starts at the next bar
+    state.gb.edit = i;
+    if (gbPlaying) gbQueued = i === gbPlayIdx && gbQueued == null ? null : i;
+    gbMarkCells(); save();
+  }
+  var gbHeard = -1; // the pattern you can hear right now (the scheduler runs slightly ahead)
+  function gbFrame() {
+    var cur = null; while (gbQ.length && gbQ[0].time <= ctx.currentTime) cur = gbQ.shift();
+    if (!cur) return;
+    if (cur.pat !== gbHeard) {
+      gbHeard = cur.pat;
+      if (state.gb.chain && state.gb.edit !== cur.pat) { state.gb.edit = cur.pat; gbMarkCells(); } // in a chain, the grids follow what plays
+      gbMarkPats();
+    }
+    gbShowStep(state.gb.edit === cur.pat ? cur.step : -1);
+  }
   function gbRecordHit(id) {
     if (!gbRec || !gbPlaying || GB_VOICES.indexOf(id) < 0) return;
     var sd = 60 / state.gb.bpm / 4, now = ctx.currentTime - (ctx.outputLatency || 0), step = ((Math.round(gbStep - (gbBase - now) / sd) % 16) + 16) % 16;
     gbSkip[id] = ctx.currentTime + sd * 0.7; // do not replay the tap the player just made
-    if (!state.gb.drums[id][step]) { state.gb.drums[id][step] = true; state.gb.preset = ''; gbMarkCells(); save(); }
+    var pt = state.gb.pats[gbPlayIdx]; // taps go into the pattern that is playing
+    if (!pt.drums[id][step]) { pt.drums[id][step] = true; pt.name = ''; gbMarkCells(); save(); }
   }
   function gbSetRec(on) { gbRec = on; $('gbRec').classList.toggle('sel', on); $('gbRec').setAttribute('aria-pressed', on); $('gbRec').textContent = on ? '● Recording taps' : '● Record taps'; }
 
@@ -2730,26 +2794,26 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       lab.addEventListener('click', function () { g.kit[id].mute = !g.kit[id].mute; gbMarkCells(); save(); });
       dg.appendChild(lab); gbCells.drums[id] = { lab: lab, cells: [] };
       for (i = 0; i < 16; i++) (function (i) {
-        gbCells.drums[id].cells.push(gbCell(dg, i, GB_NAMES[id], function () { return g.drums[id][i]; }, function (v) {
-          g.drums[id][i] = v; g.preset = ''; gbMarkCells(); save();
-          if (v && !gbPlaying) { ensureAudio(); drumDest = GBN.input; hit(id, ctx.currentTime, g.accent[i] ? 1.3 : 0.85); drumDest = null; }
+        gbCells.drums[id].cells.push(gbCell(dg, i, GB_NAMES[id], function () { return EP().drums[id][i]; }, function (v) {
+          EP().drums[id][i] = v; EP().name = ''; gbMarkCells(); save();
+          if (v && !gbPlaying) { ensureAudio(); drumDest = GBN.input; hit(id, ctx.currentTime, EP().accent[i] ? 1.3 : 0.85); drumDest = null; }
         }));
       })(i);
     });
     dg.appendChild(el('span', 'sep'));
     var al = el('span', 'lab', 'Accent'); dg.appendChild(al);
-    var ar = []; for (i = 0; i < 16; i++) (function (i) { ar.push(gbCell(dg, i, 'Accent', function () { return g.accent[i]; }, function (v) { g.accent[i] = v; g.preset = ''; gbMarkCells(); save(); })); })(i);
+    var ar = []; for (i = 0; i < 16; i++) (function (i) { ar.push(gbCell(dg, i, 'Accent', function () { return EP().accent[i]; }, function (v) { EP().accent[i] = v; EP().name = ''; gbMarkCells(); save(); })); })(i);
     ar.forEach(function (c) { c.classList.add('acc-cell'); }); gbCells.accent = ar;
     // bass: 13 note rows (the key note up to its octave), then Up/Down, Accent and Slide
     for (var r = 12; r >= 0; r--) (function (r) {
       var lab = el('span', 'lab' + (r % 12 === 0 ? ' rootrow' : ''), NOTE_NAMES[(g.root + r) % 12] + (r === 12 ? ' ↑' : '')); bg.appendChild(lab);
       gbCells.bass[r] = [];
       for (var i2 = 0; i2 < 16; i2++) (function (i) {
-        gbCells.bass[r].push(gbCell(bg, i, 'Bass note ' + NOTE_NAMES[(g.root + r) % 12], function () { var b = g.bass[i]; return b.on && bassRow(b) === r; }, function (v) {
-          var b = g.bass[i], shift = bassShift(b);
+        gbCells.bass[r].push(gbCell(bg, i, 'Bass note ' + NOTE_NAMES[(g.root + r) % 12], function () { var b = EP().bass[i]; return b.on && bassRow(b) === r; }, function (v) {
+          var b = EP().bass[i], shift = bassShift(b);
           if (v) { b.on = true; b.n = r % 12; b.o = (r === 12 ? 1 : 0) + shift; }
           else b.on = false;
-          g.preset = ''; gbMarkCells(); save();
+          EP().name = ''; gbMarkCells(); save();
           if (v && !gbPlaying) { ensureAudio(); acidV = null; acidNote(ctx.currentTime, gbMidi(b), 0.25, b.a, false, GBN.input); }
         }));
       })(i2);
@@ -2761,9 +2825,9 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
         var b = el('button', 'cell txt' + (Math.floor(i / 4) % 2 === 0 ? ' alt' : '') + (i % 4 === 0 && i ? ' beat' : '')); b.type = 'button';
         b.setAttribute('aria-label', row[1] + ', step ' + (i + 1));
         b.addEventListener('click', function () {
-          var s2 = g.bass[i];
+          var s2 = EP().bass[i];
           if (row[0] === 'oct') { var sh = bassShift(s2), nx = sh === 0 ? 1 : sh === 1 ? -1 : 0; s2.o = (bassRow(s2) === 12 ? 1 : 0) + nx; } else if (row[0] === 'acc') s2.a = !s2.a; else s2.s = !s2.s;
-          g.preset = ''; gbMarkCells(); save();
+          EP().name = ''; gbMarkCells(); save();
         });
         bg.appendChild(b); gbCols[i].push(b); gbCells[row[0]].push(b);
       })(i3);
@@ -2773,19 +2837,34 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var g = state.gb;
     GB_VOICES.forEach(function (id) {
       var c = gbCells.drums[id]; c.lab.classList.toggle('muted', g.kit[id].mute); c.lab.setAttribute('aria-pressed', g.kit[id].mute);
-      c.cells.forEach(function (b, i) { setCell(b, g.drums[id][i]); });
+      c.cells.forEach(function (b, i) { setCell(b, EP().drums[id][i]); });
       if (gbPadEls[id]) gbPadEls[id].classList.toggle('muted', g.kit[id].mute);
     });
-    gbCells.accent.forEach(function (b, i) { setCell(b, g.accent[i]); });
-    for (var r = 0; r <= 12; r++) gbCells.bass[r].forEach(function (b, i) { setCell(b, g.bass[i].on && bassRow(g.bass[i]) === r); });
+    var ep = EP();
+    gbCells.accent.forEach(function (b, i) { setCell(b, ep.accent[i]); });
+    for (var r = 0; r <= 12; r++) gbCells.bass[r].forEach(function (b, i) { setCell(b, ep.bass[i].on && bassRow(ep.bass[i]) === r); });
     for (var i = 0; i < 16; i++) {
-      var s3 = g.bass[i], sh = bassShift(s3);
+      var s3 = ep.bass[i], sh = bassShift(s3);
       gbCells.oct[i].textContent = sh > 0 ? '↑' : sh < 0 ? '↓' : ''; setCell(gbCells.oct[i], sh !== 0);
       setCell(gbCells.acc[i], s3.a); setCell(gbCells.slide[i], s3.s);
     }
     $('gbMuteBass').classList.toggle('sel', g.bassMute); $('gbMuteBass').setAttribute('aria-pressed', g.bassMute);
-    Array.prototype.forEach.call($('gbPresets').children, function (b) { b.classList.toggle('sel', b.dataset.name === g.preset); });
+    Array.prototype.forEach.call($('gbPresets').children, function (b) { b.classList.toggle('sel', b.dataset.name === ep.name); });
+    gbMarkPats();
   }
+  function gbMarkPats() {
+    var g = state.gb;
+    gbPatEls.forEach(function (b, i) {
+      var playingNow = gbPlaying && gbHeard === i, queued = gbPlaying && gbQueued === i;
+      b.classList.toggle('sel', g.edit === i); b.classList.toggle('empty', !patFilled(g.pats[i]));
+      b.classList.toggle('playing', playingNow); b.classList.toggle('queued', queued);
+      b.setAttribute('aria-pressed', g.edit === i);
+      b.title = 'Pattern ' + GB_LETTERS[i] + (g.pats[i].name ? ': ' + g.pats[i].name : patFilled(g.pats[i]) ? '' : ' (empty)') + (playingNow ? ', playing' : queued ? ', starts at the next bar' : '');
+    });
+    $('gbChain').classList.toggle('sel', g.chain); $('gbChain').setAttribute('aria-pressed', g.chain);
+    $('gbPatHint').textContent = gbQueued != null && gbPlaying ? 'Pattern ' + GB_LETTERS[gbQueued] + ' starts at the next bar.' : g.chain ? 'Chain is on: the patterns that have something in them play in turn.' : 'While the music plays, a pattern you pick starts at the end of the bar, so the beat never breaks.';
+  }
+  var gbPatEls = [];
   function gbVoiceUI() {
     var id = $('gbVoice').value, k = state.gb.kit[id];
     $('gbTune').value = k.tune; $('gbTuneOut').textContent = (k.tune > 0 ? '+' : '') + k.tune;
@@ -2810,17 +2889,18 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       s2.o = Math.random() < 0.18 ? 1 : 0; if (s2.n === 0 && Math.random() < 0.25) s2.o = 1;
       s2.a = Math.random() < 0.25; s2.s = Math.random() < 0.2;
     });
-    state.gb.bass = b; state.gb.preset = ''; gbMarkCells(); save();
+    EP().bass = b; EP().name = ''; gbMarkCells(); save();
   }
   function gbToCompose() { // add the drums and the bass line to Compose, 8 bars long
     var g = state.gb, bars = Math.min(8, C.bars), note = $('gbNote');
     if (C.tracks.length > 10) { note.textContent = 'Compose already has ' + C.tracks.length + ' tracks. Remove a couple there first.'; return; }
     var dt = { id: cNew('t'), kind: 'perc', inst: 'machine', vol: 85, mute: false, solo: false, octave: 0, clips: [] }, k = percClip('machine', 0, bars);
-    KITS.machine.strokes.forEach(function (id) { if (g.drums[id] && !g.kit[id].mute) for (var i = 0; i < bars * 16; i++) k.steps[id][i] = g.drums[id][i % 16]; });
+    var seq = gbSequence(bars).map(function (i) { return g.pats[i]; });
+    KITS.machine.strokes.forEach(function (id) { if (GB_VOICES.indexOf(id) >= 0 && !g.kit[id].mute) for (var i = 0; i < bars * 16; i++) k.steps[id][i] = seq[Math.floor(i / 16)].drums[id][i % 16]; });
     k.id = cNew('c'); dt.clips.push(k); C.tracks.push(dt);
-    if (!g.bassMute && g.bass.some(function (b) { return b.on; })) {
+    if (!g.bassMute && seq.some(function (pt) { return pt.bass.some(function (b) { return b.on; }); })) {
       var bt = { id: cNew('t'), kind: 'mel', inst: 'Acid bass', vol: 80, mute: false, solo: false, octave: 2, clips: [] }, notes = [];
-      for (var bar = 0; bar < bars; bar++) g.bass.forEach(function (b, i) {
+      for (var bar = 0; bar < bars; bar++) seq[bar].bass.forEach(function (b, i) {
         if (!b.on) return;
         var midi = gbMidi(b), best = 0; for (var r = 1; r <= 14; r++) if (Math.abs(cMidi(bt, r) - midi) < Math.abs(cMidi(bt, best) - midi)) best = r;
         notes.push({ s: bar * 16 + i, r: best, l: b.s ? 2 : 1 });
@@ -2835,18 +2915,22 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     b.disabled = true; b.textContent = 'Preparing the file…'; note.textContent = '';
     ensureAudio();
     var g = state.gb, sd = 60 / g.bpm / 4;
+    var seq = gbSequence(8);
     renderOffline(8 * 16 * sd + 2.5, 0.3, function () {
-      for (var i = 0; i < 128; i++) gbStepAt(i % 16, 0.3 + i * sd + (i % 2 ? g.swing / 100 * sd * 0.66 : 0), sd, GBN.input);
+      gbPrevBass = null;
+      for (var i = 0; i < 128; i++) { var bar = Math.floor(i / 16); gbStepAt(g.pats[seq[bar]], i % 16, 0.3 + i * sd + (i % 2 ? g.swing / 100 * sd * 0.66 : 0), sd, GBN.input, g.pats[seq[(bar + 1) % 8]]); }
+      gbPrevBass = null;
     }).then(function (r) {
       var blob = wavBlob(r.buf, r.skip), url = URL.createObjectURL(blob), a = el('a');
-      a.href = url; a.download = 'drum-machine-' + ((g.preset || 'loop').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'loop') + '-' + g.bpm + 'bpm.wav';
+      a.href = url; a.download = 'drum-machine-' + ((g.chain ? 'chain' : EP().name || 'loop').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'loop') + '-' + g.bpm + 'bpm.wav';
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
       note.textContent = 'Saved ' + a.download + '. If nothing downloaded, your browser may have blocked it: try the live site.';
     }).catch(function () { note.textContent = 'The file could not be made in this browser. Try the latest Chrome, Firefox or Safari.'; })
       .then(function () { b.disabled = false; b.textContent = '⤓ Download 8 bars'; });
   }
 
-  if (!gbValid(state.gb)) { state.gb = gbDefault(); gbLoad('Techno'); }
+  gbMigrate(state.gb);
+  if (!gbValid(state.gb)) { state.gb = gbDefault(); gbLoad('Techno'); state.gb.pats[1] = gbVariation(state.gb.pats[0]); }
   (function gbWire() {
     Object.keys(GB_PRESETS).forEach(function (name) {
       var b = el('button', 'chip', name); b.type = 'button'; b.dataset.name = name;
@@ -2867,7 +2951,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     $('gbBpm').addEventListener('input', function () { state.gb.bpm = +this.value; $('gbBpmOut').textContent = this.value; applyGb(); save(); });
     $('gbSwing').addEventListener('input', function () { state.gb.swing = +this.value; $('gbSwingOut').textContent = this.value; save(); });
     $('gbRoot').addEventListener('change', function () { state.gb.root = +this.value; gbRender(); save(); });
-    $('gbWave').addEventListener('change', function () { state.gb.synth.wave = this.value; state.gb.preset = ''; gbMarkCells(); save(); });
+    $('gbWave').addEventListener('change', function () { state.gb.synth.wave = this.value; save(); });
     Object.keys(GB_SLIDERS).forEach(function (k) { $(k).addEventListener('input', function () { state.gb.synth[GB_SLIDERS[k]] = +this.value; save(); }); });
     $('gbVoice').addEventListener('change', gbVoiceUI);
     $('gbTune').addEventListener('input', function () { var id = $('gbVoice').value; state.gb.kit[id].tune = +this.value; gbVoiceUI(); save(); });
@@ -2878,8 +2962,21 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     $('gbFiltReset').addEventListener('click', function () { state.gb.fx.filter = 0; $('gbFilt').value = 0; $('gbFiltOut').textContent = 'off'; applyGb(); save(); });
     $('gbEcho').addEventListener('input', function () { state.gb.fx.echo = +this.value; applyGb(); save(); });
     $('gbVerb').addEventListener('input', function () { state.gb.fx.verb = +this.value; applyGb(); save(); });
-    $('gbClearDrums').addEventListener('click', function () { GB_VOICES.forEach(function (id) { state.gb.drums[id] = new Array(16).fill(false); }); state.gb.accent = new Array(16).fill(false); state.gb.preset = ''; gbMarkCells(); save(); });
-    $('gbClearLine').addEventListener('click', function () { state.gb.bass = gbBlankBass(); state.gb.preset = ''; gbMarkCells(); save(); });
+    $('gbClearDrums').addEventListener('click', function () { var pt = EP(); GB_VOICES.forEach(function (id) { pt.drums[id] = new Array(16).fill(false); }); pt.accent = new Array(16).fill(false); pt.name = ''; gbMarkCells(); save(); });
+    $('gbClearLine').addEventListener('click', function () { EP().bass = gbBlankBass(); EP().name = ''; gbMarkCells(); save(); });
+    GB_LETTERS.forEach(function (L, i) {
+      var b = el('button', 'chip pat', L); b.type = 'button';
+      b.addEventListener('click', function () { gbPick(i); });
+      $('gbPats').appendChild(b); gbPatEls.push(b);
+      var o = el('option', '', 'Pattern ' + L); o.value = i; $('gbCopy').appendChild(o);
+    });
+    $('gbChain').addEventListener('click', function () { state.gb.chain = !state.gb.chain; gbMarkPats(); save(); });
+    $('gbCopy').addEventListener('change', function () {
+      var to = this.value; this.value = '';
+      if (to === '' || +to === state.gb.edit) return;
+      state.gb.pats[+to] = JSON.parse(JSON.stringify(EP())); gbMarkPats(); save();
+      $('gbPatHint').textContent = 'Copied pattern ' + GB_LETTERS[state.gb.edit] + ' to ' + GB_LETTERS[+to] + '. Pick ' + GB_LETTERS[+to] + ' to change it.';
+    });
     $('gbNewLine').addEventListener('click', gbNewLine);
     $('gbMuteBass').addEventListener('click', function () { state.gb.bassMute = !state.gb.bassMute; gbMarkCells(); save(); });
     $('gbToCompose').addEventListener('click', gbToCompose);

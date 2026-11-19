@@ -54,7 +54,7 @@ Once the recordings are in hand, they get trimmed, levelled and packed into the 
 - [x] Compose: record live playing straight into a clip, with a click track.
 - [x] Compose: undo and redo.
 - [x] Drum machine page for electronic music: analog-style drums, acid bass line, effects, and Techno / House / Acid house styles.
-- [ ] Drum machine: two or more patterns (A/B) to switch between while playing.
+- [x] Drum machine: four patterns (A to D) that switch on the bar line, chain and copy.
 - [ ] Compose: 6/8 time for the Tunisian rhythms that use it (fazzani, khatm, stambeli).
 - [ ] Record your voice, since raï is built around the singer.
 - [ ] More rhythms: add the ones Nadhem knows as presets.
