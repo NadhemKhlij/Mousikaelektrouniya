@@ -55,6 +55,7 @@ Once the recordings are in hand, they get trimmed, levelled and packed into the 
 - [x] Compose: undo and redo.
 - [x] Drum machine page for electronic music: analog-style drums, acid bass line, effects, and Techno / House / Acid house styles.
 - [x] Drum machine: four patterns (A to D) that switch on the bar line, chain and copy.
+- [x] Drum machine: chords (organ, stab, pad), sidechain pump, recorded filter moves, and beats shared as links.
 - [ ] Compose: 6/8 time for the Tunisian rhythms that use it (fazzani, khatm, stambeli).
 - [ ] Record your voice, since raï is built around the singer.
 - [ ] More rhythms: add the ones Nadhem knows as presets.
