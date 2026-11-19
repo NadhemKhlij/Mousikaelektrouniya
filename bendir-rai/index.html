@@ -189,6 +189,32 @@ kbd { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--li
 .shared-note { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 14px; border-radius: 10px; background: var(--bg); border: 2px solid var(--accent); }
 .shared-note p { margin: 0; flex: 1 1 260px; font-weight: 600; }
 #cExportNote:empty { display: none; }
+/* drum machine page */
+.panel.groove { --accent: var(--drum); gap: 12px; }
+.panel.groove h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(30px, 6vw, 44px); letter-spacing: -0.02em; line-height: 1.05; margin: 0; }
+.panel.groove .about { margin: 0; color: var(--muted); font-size: 15px; max-width: 62ch; }
+.panel.groove .back { color: var(--muted); font-size: 13px; font-weight: 600; text-decoration: none; }
+.gb-part { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.gb-part h3 { font-family: var(--font-display); font-size: 18px; font-weight: 800; margin: 0 auto 0 0; }
+.acid-part { --accent: var(--synth); }
+.gb-pads { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.gb-pads .bpad { min-height: 64px; font-size: 15px; background: var(--machine); color: var(--machine-ink); border-color: var(--machine); }
+.gb-pads .bpad.muted { opacity: 0.45; }
+.gb-grid { display: grid; grid-template-columns: 96px repeat(16, 26px); gap: 2px; padding: 6px; width: max-content; }
+.gb-grid .lab { position: sticky; left: 0; z-index: 1; background: var(--panel); font-size: 12px; font-weight: 600; display: flex; align-items: center; padding: 0 6px 0 0; border: 0; text-align: left; color: var(--ink); }
+.gb-grid button.lab { cursor: pointer; }
+.gb-grid .lab.muted { color: var(--muted); text-decoration: line-through; }
+.gb-grid .cell { height: 24px; }
+.gb-grid .cell.beat { box-shadow: inset 2px 0 0 var(--muted); }
+.gb-grid .cell.on.beat { box-shadow: inset 2px 0 0 var(--ink); }
+.gb-grid .cell.now { box-shadow: inset 0 0 0 2px var(--ink); }
+.gb-grid .cell.acc-cell.on { background: var(--ink); }
+.gb-grid .sep { grid-column: 1 / -1; height: 6px; }
+.gb-grid .cell.txt { font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--on-accent); }
+.gb-grid .rootrow { color: var(--accent); }
+.gb-filter input { width: 220px; }
+#gbRec.sel { background: var(--drum); border-color: var(--drum); color: var(--on-accent); }
+@media (max-width: 720px) { .gb-pads { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; } .gb-pads .bpad { min-height: 52px; font-size: 11px; padding: 4px; } .gb-pads .bpad small { display: none; } .gb-grid { grid-template-columns: 70px repeat(16, 26px); } }
 .cplay { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 4px; }
 .cplay h3 { font-family: var(--font-display); font-size: 17px; font-weight: 800; margin: 0; }
 .cplay p { margin: 0; }
@@ -229,6 +255,7 @@ kbd { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--li
 .panel.focus .back:hover { color: var(--ink); text-decoration: underline; }
 body.page .panel.song, body.page #percTabs, body.page .transport, body.page #recHint, body.page #patDetails,
 body.page #tracks, body.page #tracksHint, body.page #notesDetails, body.page #surfRow, body.page.page-perc #synthPanel,
+body.page.page-groove #drumsPanel, body.page.page-groove #synthPanel,
 body.page.page-compose:not(.play-perc) #drumsPanel, body.page.page-compose:not(.play-mel) #synthPanel,
 body.page-compose #guide, body.page-compose #guideHint, body.page-compose #soundRow, body.page-compose #synthKnobs,
 body.page-compose #qtRow, body.page-compose #shapeDetails, body.page.page-mel #drumsPanel, body.page.page-mel:not(.page-sounds) #soundRow, body.page #drumPatLbl { display: none; }
@@ -441,6 +468,66 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     </div>
   </section>
 
+  <section class="panel groove" id="groove" aria-labelledby="gbTitle" hidden>
+    <a class="back" href="#">← Back to the studio</a>
+    <h2 id="gbTitle">Drum machine</h2>
+    <p class="about">Analog-style drums and an acid bass line, for techno, house and acid house. Pick a style to start, then change it step by step. Press <kbd>Space</kbd> to play or stop.</p>
+    <div class="ctop">
+      <button class="play" id="gbPlay" type="button">▶ Play</button>
+      <button class="chip rec" id="gbRec" type="button" aria-pressed="false">● Record taps</button>
+      <div class="ctl"><label for="gbBpm">Tempo <output id="gbBpmOut">128</output> BPM</label><input id="gbBpm" type="range" min="60" max="160" step="1"></div>
+      <div class="ctl"><label for="gbSwing">Swing <output id="gbSwingOut">0</output>%</label><input id="gbSwing" type="range" min="0" max="60" step="1"></div>
+    </div>
+    <div class="ctl"><span class="lbl">Start from a style</span><div class="chips" id="gbPresets"></div></div>
+    <div class="gb-pads" id="gbPads"></div>
+
+    <div class="gb-part drums-part">
+      <div class="head"><h3>Drums</h3><button class="chip" id="gbClearDrums" type="button">Clear drums</button></div>
+      <div class="ced-scroll"><div class="gb-grid" id="gbDrumGrid"></div></div>
+      <p class="hint">Click a square to add a hit, or drag to paint several. Hits on an <b>Accent</b> step are louder. Click a drum's name to mute it.</p>
+      <div class="knobs">
+        <div class="ctl"><label for="gbVoice">Shape a drum</label><select id="gbVoice"></select></div>
+        <div class="ctl"><label for="gbTune">Tune <output id="gbTuneOut">0</output></label><input id="gbTune" type="range" min="-12" max="12" step="1"></div>
+        <div class="ctl"><label for="gbDecay">Decay <output id="gbDecayOut">100</output>%</label><input id="gbDecay" type="range" min="25" max="250" step="5"></div>
+        <div class="ctl"><label for="gbLevel">Level</label><input id="gbLevel" type="range" min="0" max="100" step="1"></div>
+      </div>
+    </div>
+
+    <div class="gb-part acid-part">
+      <div class="head"><h3>Acid bass</h3>
+        <button class="chip" id="gbNewLine" type="button">New acid line</button><button class="chip" id="gbClearLine" type="button">Clear line</button><button class="chip" id="gbMuteBass" type="button" aria-pressed="false">Mute bass</button></div>
+      <div class="knobs">
+        <div class="ctl"><label for="gbRoot">Key</label><select id="gbRoot"></select></div>
+        <div class="ctl"><label for="gbWave">Wave</label><select id="gbWave"><option value="sawtooth">Saw</option><option value="square">Square</option></select></div>
+        <div class="ctl"><label for="gbCut">Cutoff</label><input id="gbCut" type="range" min="0" max="100"></div>
+        <div class="ctl"><label for="gbRes">Resonance</label><input id="gbRes" type="range" min="0" max="100"></div>
+        <div class="ctl"><label for="gbEnv">Env mod</label><input id="gbEnv" type="range" min="0" max="100"></div>
+        <div class="ctl"><label for="gbDec">Decay</label><input id="gbDec" type="range" min="0" max="100"></div>
+        <div class="ctl"><label for="gbAcc">Accent</label><input id="gbAcc" type="range" min="0" max="100"></div>
+        <div class="ctl"><label for="gbDrive">Drive</label><input id="gbDrive" type="range" min="0" max="100"></div>
+        <div class="ctl"><label for="gbVol">Volume</label><input id="gbVol" type="range" min="0" max="100"></div>
+      </div>
+      <div class="ced-scroll"><div class="gb-grid" id="gbBassGrid"></div></div>
+      <p class="hint">Each step plays one note: click a square in a column to pick its note, and click it again to make the step silent. <b>Up</b> and <b>Down</b> move a note by an octave, <b>Accent</b> makes it louder and brighter, and <b>Slide</b> glides into the next note without a new attack. Turn up Resonance and move Cutoff while it plays for the acid sound.</p>
+    </div>
+
+    <div class="gb-part">
+      <div class="head"><h3>Effects</h3></div>
+      <div class="knobs">
+        <div class="ctl gb-filter"><label for="gbFilt">Filter <output id="gbFiltOut">off</output></label><input id="gbFilt" type="range" min="-100" max="100" step="1"><span class="hint">low-pass ← off → high-pass</span></div>
+        <div class="ctl"><label for="gbEcho">Echo</label><input id="gbEcho" type="range" min="0" max="100"></div>
+        <div class="ctl"><label for="gbVerb">Reverb</label><input id="gbVerb" type="range" min="0" max="100"></div>
+        <button class="chip" id="gbFiltReset" type="button">Filter off</button>
+      </div>
+    </div>
+
+    <div class="ctop">
+      <button class="chip" id="gbToCompose" type="button">Use in Compose</button>
+      <button class="chip" id="gbWav" type="button">⤓ Download 8 bars</button>
+    </div>
+    <p class="hint" id="gbNote" role="status"></p>
+  </section>
+
   <section class="panel drums" id="drumsPanel" aria-label="Percussion">
     <div class="head"><h2>Percussion</h2><span class="lbl" id="drumPatLbl"></span></div>
     <div class="chips" id="percTabs" role="tablist" aria-label="Instrument"></div>
@@ -556,7 +643,11 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     { id: 'tbal', name: 'Tbal', key: '7' }, { id: 'tbalt', name: 'Tbal thin stick', key: '' },
     { id: 'clap', name: 'Clap', key: '8' },
     { id: 'kick', name: 'Kick', key: '9', machine: true }, { id: 'snare', name: 'Snare', key: '0', machine: true },
-    { id: 'hat', name: 'Hat', key: '-', machine: true }, { id: 'ohat', name: 'Open hat', key: '=', machine: true }
+    { id: 'hat', name: 'Hat', key: '-', machine: true }, { id: 'ohat', name: 'Open hat', key: '=', machine: true },
+    // more drum-machine voices, used on the Drum machine page and in Compose (not shown in the studio grid)
+    { id: 'mclap', name: 'Machine clap', key: '', machine: true, extra: true }, { id: 'rim', name: 'Rim', key: '', machine: true, extra: true },
+    { id: 'ltom', name: 'Low tom', key: '', machine: true, extra: true }, { id: 'htom', name: 'High tom', key: '', machine: true, extra: true },
+    { id: 'ride', name: 'Ride', key: '', machine: true, extra: true }, { id: 'cow', name: 'Cowbell', key: '', machine: true, extra: true }
   ];
   var ALT = { dum: 1, tak: 1, ka: 1, clap: 1, tarj: 1 }; // drums with a second recorded take
   var NOTE_NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
@@ -571,11 +662,12 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     'Synth brass': { inst: 'brass',     cutoff: 90, attack: 1,  release: 18, delay: 18, octave: 4, glide: 0,  vibrato: 8 },
     Strings:       { inst: 'strings',   cutoff: 92, attack: 30, release: 55, delay: 15, octave: 3, glide: 0,  vibrato: 10 },
     Bass:          { inst: 'bass',      cutoff: 85, attack: 0,  release: 12, delay: 0,  octave: 2, glide: 0,  vibrato: 0 },
-    'Analog lead': { inst: '',          cutoff: 72, attack: 1,  release: 18, delay: 26, octave: 4, glide: 28, vibrato: 30 }
+    'Analog lead': { inst: '',          cutoff: 72, attack: 1,  release: 18, delay: 26, octave: 4, glide: 28, vibrato: 30 },
+    'Acid bass':   { inst: 'acid',      cutoff: 100, attack: 0, release: 8,  delay: 12, octave: 2, glide: 0,  vibrato: 0 }
   };
   // Sounds made in the page instead of from a recorded pack. When real oud recordings are packed as
   // s/oud.json (python3 tools/build_packs.py notes FOLDER oud), delete oud from this list to use them.
-  var MODELLED = { oud: true };
+  var MODELLED = { oud: true, acid: true };
   var SOUND_KEYS = ['inst', 'cutoff', 'attack', 'release', 'delay', 'glide', 'vibrato', 'octave', 'breath'];
   var TRACKS = [
     { id: 'lead', name: 'Lead', sound: 'Raï lead', level: 70, what: 'one note per step' },
@@ -627,8 +719,8 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       about: 'A big double-sided drum played with two sticks, often outdoors beside the zorna at weddings and festivals. A heavy curved stick gives the deep beat and a thin stick fills the space around it.' },
     shqashiq: { name: 'Shqashiq', kind: 'perc', sim: 'shq', beat: 'Stambeli',
       about: 'Large iron castanets, one pair in each hand, also called krakeb. They drive stambeli, the trance music of Tunisia, with a fast galloping clatter.' },
-    'drum-machine': { name: 'Drum machine', kind: 'perc', sim: 'machine', beat: 'Raï 80s machine',
-      about: 'Drum machines and synthesizers came into raï studios in the early 1980s and shaped the sound of pop-raï. Play the kick, snare and hats like a producer from that time.' },
+    'drum-machine': { name: 'Drum machine', kind: 'groove',
+      about: 'Analog-style drums and an acid bass line, for techno, house and acid house, and the 80s pop-raï sound.' },
     oud: { name: 'Oud', kind: 'mel', sound: 'Oud', surface: 'oud', beat: 'Douik',
       about: 'A short-necked lute with a deep, pear-shaped body and no frets, plucked with a long plectrum. Without frets, the player can land between the notes of a piano, which the maqam needs.' },
     gasba: { name: 'Gasba', kind: 'mel', sound: 'Gasba', surface: 'pipe', beat: 'Fazzani',
@@ -802,6 +894,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var buf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), data = buf.getChannelData(0);
     for (var i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
     noise = buf;
+    gbBuild();
   }
   // wake the audio engine on the very first touch so the first tap already sounds right
   ['pointerdown', 'keydown'].forEach(function (ev) { window.addEventListener(ev, ensureAudio, { capture: true, once: true }); });
@@ -827,19 +920,52 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; if (q) f.Q.value = q;
     s.connect(f); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.05); return f;
   }
+  // Drum-machine voices, synthesized like the classic analog machines. Tune (semitones) and decay
+  // come from the Drum machine page's "Shape a drum" settings.
+  function kp(id) { var k = state.gb && state.gb.kit && state.gb.kit[id]; return { tf: Math.pow(2, ((k && k.tune) || 0) / 12), dm: (k && k.decay) || 1 }; }
+  var HAT_HZ = [205.3, 304.4, 369.6, 522.7, 540, 800], ohatG = null;
+  function metal(t, v, tf, dur, band) { // six detuned square waves through filters: the metallic hiss of analog hats and cymbals
+    var bp = ctx.createBiquadFilter(), hp = ctx.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = Math.min(16000, band * tf); bp.Q.value = 0.8; hp.type = 'highpass'; hp.frequency.value = Math.min(14000, 7000 * tf);
+    HAT_HZ.forEach(function (hz) { osc('square', hz * tf, t, t + dur + 0.05).connect(bp); });
+    var g = decayGain(t, v, dur); bp.connect(hp); hp.connect(g); return g;
+  }
   var MACHINE = {
     kick: function (t, v) {
-      var o = osc('sine', 160, t, t + 0.5); o.frequency.exponentialRampToValueAtTime(48, t + 0.1);
-      o.connect(decayGain(t, v * 1.15, 0.42));
+      var k = kp('kick'), o = osc('sine', 155 * k.tf, t, t + 0.9 * k.dm + 0.1); o.frequency.exponentialRampToValueAtTime(46 * k.tf, t + 0.09);
+      o.connect(decayGain(t, v * 1.15, 0.45 * k.dm));
       noiseSrc(t, 0.02, 'lowpass', 2500).connect(decayGain(t, v * 0.25, 0.02));
     },
     snare: function (t, v) {
-      noiseSrc(t, 0.2, 'highpass', 1400).connect(decayGain(t, v * 0.7, 0.18));
-      var o = osc('triangle', 210, t, t + 0.15); o.frequency.exponentialRampToValueAtTime(150, t + 0.1);
-      o.connect(decayGain(t, v * 0.55, 0.12));
+      var k = kp('snare');
+      noiseSrc(t, 0.3 * k.dm, 'highpass', 1400).connect(decayGain(t, v * 0.7, 0.18 * k.dm));
+      var o = osc('triangle', 205 * k.tf, t, t + 0.2); o.frequency.exponentialRampToValueAtTime(150 * k.tf, t + 0.1);
+      o.connect(decayGain(t, v * 0.55, 0.12 * k.dm));
     },
-    hat: function (t, v) { noiseSrc(t, 0.06, 'highpass', 7500).connect(decayGain(t, v * 0.42, 0.045)); },
-    ohat: function (t, v) { noiseSrc(t, 0.35, 'highpass', 7000).connect(decayGain(t, v * 0.38, 0.3)); }
+    mclap: function (t, v) {
+      var k = kp('mclap');
+      [0, 0.011, 0.022, 0.032].forEach(function (d) { noiseSrc(t + d, 0.02, 'bandpass', 1150 * k.tf, 1.3).connect(decayGain(t + d, v * 0.75, 0.012)); });
+      noiseSrc(t + 0.032, 0.3 * k.dm, 'bandpass', 1150 * k.tf, 1.1).connect(decayGain(t + 0.032, v * 0.8, 0.2 * k.dm));
+    },
+    hat: function (t, v) {
+      var k = kp('hat');
+      if (ohatG) { try { ohatG.gain.cancelScheduledValues(t); ohatG.gain.setTargetAtTime(0, t, 0.006); } catch (e) {} ohatG = null; } // a closed hat cuts the open one
+      metal(t, v * 0.55, k.tf, 0.05 * k.dm, 10000);
+    },
+    ohat: function (t, v) { var k = kp('ohat'); ohatG = metal(t, v * 0.5, k.tf, 0.35 * k.dm, 9000); },
+    rim: function (t, v) {
+      var k = kp('rim'), bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1750 * k.tf; bp.Q.value = 3;
+      osc('triangle', 1750 * k.tf, t, t + 0.05).connect(bp); osc('square', 520 * k.tf, t, t + 0.05).connect(bp);
+      bp.connect(decayGain(t, v * 0.8, 0.03 * k.dm));
+    },
+    ltom: function (t, v) { var k = kp('ltom'), o = osc('sine', 115 * k.tf, t, t + 0.6 * k.dm); o.frequency.exponentialRampToValueAtTime(78 * k.tf, t + 0.25); o.connect(decayGain(t, v * 0.95, 0.32 * k.dm)); },
+    htom: function (t, v) { var k = kp('htom'), o = osc('sine', 185 * k.tf, t, t + 0.5 * k.dm); o.frequency.exponentialRampToValueAtTime(130 * k.tf, t + 0.2); o.connect(decayGain(t, v * 0.9, 0.26 * k.dm)); },
+    ride: function (t, v) { var k = kp('ride'); metal(t, v * 0.3, k.tf * 1.9, 0.9 * k.dm, 7000); osc('sine', 3300 * k.tf, t, t + 0.6).connect(decayGain(t, v * 0.05, 0.5 * k.dm)); },
+    cow: function (t, v) {
+      var k = kp('cow'), bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 800 * k.tf; bp.Q.value = 2.5;
+      osc('square', 540 * k.tf, t, t + 0.4).connect(bp); osc('square', 800 * k.tf, t, t + 0.4).connect(bp);
+      bp.connect(decayGain(t, v * 0.5, 0.25 * k.dm));
+    }
   };
   function fallbackDrum(id, t, v) {
     if (id === 'dum' || id === 'bendir' || id === 'tbal') {
@@ -926,7 +1052,10 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var hz = midiHz(midi), gl = glideS(s), from = gl > 0.005 && fromHz ? fromHz : hz, land = t + (from === hz ? 0 : gl);
     var smp = s.inst && !MODELLED[s.inst] && sampleFor(s.inst, midi), isBuf = !!smp || !!MODELLED[s.inst], parts, pitch = [], peak;
     f.type = 'lowpass';
-    if (MODELLED[s.inst]) {
+    if (s.inst === 'acid') { // the acid bass voice, set up on the Drum machine page
+      var av = acidVoice(t, midi, false, f, true); pitch.push(av.osc.detune); parts = [av.osc]; peak = 0.9;
+      f.Q.value = 0.7; f.frequency.value = 18000; // the acid voice has its own filters
+    } else if (MODELLED[s.inst]) {
       var os = ctx.createBufferSource();
       os.buffer = oudBuffer(midi); // the body and the plectrum are part of the model
       if (os.detune) pitch.push(os.detune);
@@ -1110,7 +1239,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     $('play').textContent = '▶ Play'; $('play').classList.remove('playing');
     $('fPlay').textContent = '▶ Play a rhythm'; $('fPlay').classList.remove('playing');
   }
-  function toggle() { if (state.page === 'compose') { cToggle(); return; } playing ? stop() : start(); }
+  function toggle() { if (state.page === 'compose') { cToggle(); return; } if (state.page === 'drum-machine') { gbToggle(); return; } playing ? stop() : start(); }
 
   // ---------- percussion simulators ----------
   var drumRow = {}, DRUM_BY = {};
@@ -1118,19 +1247,22 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   function touchVel() { return state.touch / 100; }
   function record(id) {
     if (state.page === 'compose') { cRecordHit(id); return; }
+    if (state.page === 'drum-machine') { gbRecordHit(id); return; }
     if (!playing || !state.rec) return;
     var p = patAt(playPat), sd = stepDurFor(p), n = p.steps, now = ctx.currentTime - (ctx.outputLatency || 0);
     var step = ((Math.round(stepIdx - (baseTime - now) / sd) % n) + n) % n;
     skip[id] = ctx.currentTime + sd * 0.7; // do not replay the tap the player just made
     if (!p.drums[id][step]) {
       p.drums[id][step] = true; p.beat = '';
-      if (playPat === state.cur) setCell(drumRow[id][step], true);
+      if (playPat === state.cur && drumRow[id]) setCell(drumRow[id][step], true);
       markChips(); markPats(); save();
     }
   }
   function tap(id, vel) {
     ensureAudio();
+    if (state.page === 'drum-machine') drumDest = GBN && GBN.input; // through the drum machine's effects
     hit(id, ctx.currentTime, vel == null ? (DRUM_BY[id].machine ? 1 : touchVel()) : vel); flash(id);
+    drumDest = null; gbFlash(id);
     record(id);
   }
 
@@ -1162,8 +1294,9 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     clap: { name: 'Clap', shape: 'pads', zones: [{ id: 'clap', label: 'Clap', key: '8', color: 'ring' }],
       help: 'Hand claps, as in a wedding or a raï chorus.' },
     machine: { name: 'Drum machine', shape: 'pads', machine: true, zones: [
-      { id: 'kick', label: 'Kick', key: '9' }, { id: 'snare', label: 'Snare', key: '0' }, { id: 'hat', label: 'Hat', key: '-' }, { id: 'ohat', label: 'Open hat', key: '=' }],
-      help: 'An 80s-style drum machine, like the ones that came into raï studios in the early 1980s.' }
+      { id: 'kick', label: 'Kick', key: '9' }, { id: 'snare', label: 'Snare', key: '0' }, { id: 'hat', label: 'Hat', key: '-' }, { id: 'ohat', label: 'Open hat', key: '=' },
+      { id: 'mclap', label: 'Clap' }, { id: 'rim', label: 'Rim' }, { id: 'ltom', label: 'Low tom' }, { id: 'htom', label: 'High tom' }, { id: 'ride', label: 'Ride' }, { id: 'cow', label: 'Cowbell' }],
+      help: 'An analog-style drum machine, like the ones that came into raï studios in the early 1980s and drive techno and house.' }
   };
   function lvl(id) { return Math.pow(state.levels[id] / 100, 2) * 1.2 * touchVel(); }
   var HOLDS = { // what happens while a finger stays down
@@ -1330,6 +1463,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   ruler($('drumGrid'));
   var levelInputs = {};
   DRUMS.forEach(function (d) {
+    if (d.extra) return; // played on the Drum machine page and in Compose
     var r = buildRow($('drumGrid'), d.name,
       function (i) { return P().drums[d.id][i]; },
       function (i, v) { P().drums[d.id][i] = v; P().beat = ''; },
@@ -1738,6 +1872,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     applyMeter();
     syncers.forEach(function (f) { f(); });
     DRUMS.forEach(function (d) {
+      if (!drumRow[d.id]) return;
       levelInputs[d.id].value = state.levels[d.id];
       drumRow[d.id].forEach(function (b, i) { setCell(b, P().drums[d.id][i]); });
     });
@@ -1754,7 +1889,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     tbal: { name: 'Tbal', strokes: ['tbal', 'tbalt'] },
     shq: { name: 'Shqashiq', strokes: ['shq'] },
     clap: { name: 'Clap', strokes: ['clap'] },
-    machine: { name: 'Drum machine', strokes: ['kick', 'snare', 'hat', 'ohat'] }
+    machine: { name: 'Drum machine', strokes: ['kick', 'snare', 'hat', 'ohat', 'mclap', 'rim', 'ltom', 'htom', 'ride', 'cow'] } // new strokes go at the end: shared links rely on this order
   };
   var C, compCache = {}, cSel = null, cKeysSel = null;
   function cTrack(id) { return C.tracks.filter(function (t) { return t.id === id; })[0]; }
@@ -1768,9 +1903,13 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       });
     } catch (e) { return false; }
   }
+  function cNormalize(c) {
+    if (!c) return;
+    c.tracks.forEach(function (t) { if (t.kind === 'perc') t.clips.forEach(function (k) { KITS[t.inst].strokes.forEach(function (id) { if (!k.steps[id]) k.steps[id] = new Array(k.len * 16).fill(false); }); }); });
+  }
   function percClip(kit, start, len) { var st = {}; KITS[kit].strokes.forEach(function (id) { st[id] = new Array(len * 16).fill(false); }); return { start: start, len: len, steps: st }; }
   function fillRhythm(clip, kit, beat) {
-    var b = BEATS[beat];
+    var b = BEATS[beat] || GB_PRESETS[beat];
     KITS[kit].strokes.forEach(function (id) {
       var pat = b.d[id]; clip.steps[id] = new Array(clip.len * 16).fill(false);
       if (pat) for (var i = 0; i < clip.len * 16; i++) clip.steps[id][i] = pat[i % 16] === 'x';
@@ -1834,25 +1973,31 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     C.tracks.forEach(function (t) { if (t.mute || (anySolo && !t.solo)) return; t.clips.forEach(function (k) { end = Math.max(end, k.start + k.len); }); });
     return Math.min(end, C.bars);
   }
+  // Play something into an offline audio context (faster than real time) with its own copy of the mixer.
+  function renderOffline(seconds, lead, schedule) {
+    var sr = ctx.sampleRate, off = new OfflineAudioContext(2, Math.ceil((lead + seconds) * sr), sr);
+    var live = { ctx: ctx, master: master, drumBus: drumBus, synthBus: synthBus, delayNode: delayNode, analyser: analyser, noise: noise, bendSrc: bendSrc, trackOut: trackOut, trackSend: trackSend, GBN: GBN, ohatG: ohatG, acidV: acidV };
+    try {
+      ctx = off; trackOut = {}; trackSend = {}; ohatG = null; acidV = null;
+      buildGraph(); applyMix(); applyGb();
+      schedule();
+    } finally { // put the live engine back before anything else can play
+      ctx = live.ctx; master = live.master; drumBus = live.drumBus; synthBus = live.synthBus; delayNode = live.delayNode; analyser = live.analyser;
+      noise = live.noise; bendSrc = live.bendSrc; trackOut = live.trackOut; trackSend = live.trackSend; GBN = live.GBN; ohatG = live.ohatG; acidV = live.acidV;
+    }
+    return off.startRendering().then(function (buf) { return { buf: buf, skip: lead - 0.05 }; });
+  }
   function renderSong() {
     ensureAudio();
     return loadSounds().then(function () {
-      var sd = 60 / C.bpm / 4, bars = songEnd(), lead = 0.3, tail = 2.5, sr = ctx.sampleRate;
-      var off = new OfflineAudioContext(2, Math.ceil((lead + bars * 16 * sd + tail) * sr), sr);
-      var live = { ctx: ctx, master: master, drumBus: drumBus, synthBus: synthBus, delayNode: delayNode, analyser: analyser, noise: noise, bendSrc: bendSrc, trackOut: trackOut, trackSend: trackSend };
-      try {
-        ctx = off; trackOut = {}; trackSend = {};
-        buildGraph(); applyMix();
-        var anySolo = C.tracks.some(function (t) { return t.solo; });
+      var sd = 60 / C.bpm / 4, bars = songEnd(), anySolo = C.tracks.some(function (t) { return t.solo; });
+      return renderOffline(bars * 16 * sd + 2.5, 0.3, function () {
         C.tracks.forEach(function (t) { if (t.kind === 'mel') compTS(t); ensureOut(t.id); });
-        for (var i = 0; i < bars * 16; i++) cStepAt(i, lead + i * sd, sd, anySolo);
-      } finally { // put the live engine back before anything else can play
-        ctx = live.ctx; master = live.master; drumBus = live.drumBus; synthBus = live.synthBus; delayNode = live.delayNode;
-        analyser = live.analyser; noise = live.noise; bendSrc = live.bendSrc; trackOut = live.trackOut; trackSend = live.trackSend;
-      }
-      return off.startRendering().then(function (buf) { return { buf: buf, skip: lead - 0.05 }; });
+        for (var i = 0; i < bars * 16; i++) cStepAt(i, 0.3 + i * sd, sd, anySolo);
+      });
     });
   }
+
   function wavBlob(buf, skip) {
     var sr = buf.sampleRate, from = Math.max(0, Math.floor(skip * sr)), n = buf.length - from, chans = [buf.getChannelData(0), buf.getChannelData(1)];
     var peak = 0, i, c;
@@ -2177,6 +2322,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   function percEditor(box, tr, clip) {
     var kit = KITS[tr.inst], cols = clip.len * 16;
     var fills = Object.keys(BEATS).filter(function (b) { return BEATS[b].steps === 16 && kit.strokes.some(function (id) { return BEATS[b].d[id]; }); });
+    if (tr.inst === 'machine') fills = Object.keys(GB_PRESETS).concat(fills.filter(function (b) { return !GB_PRESETS[b]; }));
     if (fills.length) {
       var fr = el('div', 'ctl'), ch = el('div', 'chips'); fr.appendChild(el('span', 'lbl', 'Fill with a rhythm'));
       fills.forEach(function (b) { var x = el('button', 'chip', b); x.type = 'button'; x.addEventListener('click', function () { fillRhythm(clip, tr.inst, b); refreshClip(tr, clip); cEditor(); save(); }); ch.appendChild(x); });
@@ -2387,9 +2533,359 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   })();
 
   if (!validCompose(state.compose)) state.compose = demoCompose();
+  cNormalize(state.compose); if (state.composeBackup) cNormalize(state.composeBackup.song);
   if (state.composeBackup && !validCompose(state.composeBackup.song)) delete state.composeBackup;
   C = state.compose;
   histReset();
+  // ---------- drum machine page: analog drums + acid bass line ----------
+  var GB_VOICES = ['kick', 'snare', 'mclap', 'hat', 'ohat', 'rim', 'ltom', 'htom', 'ride', 'cow'];
+  var GB_NAMES = { kick: 'Kick', snare: 'Snare', mclap: 'Clap', hat: 'Closed hat', ohat: 'Open hat', rim: 'Rim', ltom: 'Low tom', htom: 'High tom', ride: 'Ride', cow: 'Cowbell' };
+  // Each style: tempo, swing, key note, drum patterns (x = hit), accents, drum shaping [tune, decay], levels,
+  // and the bass line: one token per step: a number of semitones above the key note, "." for silence,
+  // then ^ (octave up), v (octave down), a (accent), s (slide).
+  var GB_PRESETS = {
+    Techno: { bpm: 130, swing: 0, root: 9, d: { kick: 'x...x...x...x...', mclap: '....x.......x...', hat: '..x...x...x...x.', ride: 'x.x.x.x.x.x.x.x.', rim: '...x.....x....x.', ltom: '..........x.....' },
+      acc: 'x...x...x...x...', kit: { kick: [-2, 1.3], ride: [0, 0.7] }, lv: { ride: 40, rim: 45, ltom: 55, hat: 60 },
+      bass: '. 0 0 0 . 0 0 0 . 0 0 0 . 0 0 3', synth: { wave: 'sawtooth', cut: 24, res: 40, env: 35, dec: 18, acc: 40, drive: 35, vol: 70 }, fx: [0, 20, 18] },
+    House: { bpm: 124, swing: 20, root: 5, d: { kick: 'x...x...x...x...', mclap: '....x.......x...', ohat: '..x...x...x...x.', hat: 'x.xxx.xxx.xxx.xx', rim: '.......x.......x' },
+      acc: 'x...x...x...x...', kit: { kick: [0, 1], ohat: [0, 0.8] }, lv: { hat: 35, rim: 40, ohat: 60 },
+      bass: '0 . . 0 . . 0 . 3 . . 3 . 5 . 7', synth: { wave: 'square', cut: 35, res: 20, env: 25, dec: 45, acc: 30, drive: 10, vol: 72 }, fx: [0, 18, 22] },
+    'Acid house': { bpm: 122, swing: 6, root: 9, d: { kick: 'x...x...x...x...', mclap: '....x.......x...', hat: '..x...x...x...x.', ohat: '......x.......x.', cow: '..........x.....' },
+      acc: 'x...x...x...x...', kit: { kick: [-1, 1.2] }, lv: { cow: 35, ohat: 45 },
+      bass: '0a 12s 0 . 0 3a 15s 3 0 . 12 7a 10s 12 3 0a', synth: { wave: 'sawtooth', cut: 18, res: 88, env: 72, dec: 32, acc: 75, drive: 45, vol: 70 }, fx: [0, 28, 12] },
+    'Deep house': { bpm: 120, swing: 24, root: 2, d: { kick: 'x...x...x...x...', rim: '..x..x....x..x..', ohat: '..x...x...x...x.', mclap: '....x.......x...', hat: '.x.x.x.x.x.x.x.x' },
+      acc: 'x...x...x...x...', kit: { kick: [-3, 1.2], mclap: [-2, 1.3] }, lv: { hat: 30, mclap: 45, rim: 45 },
+      bass: '0s 0s 0 . . . 0s 3 . . . . 5s 5 3 .', synth: { wave: 'square', cut: 15, res: 8, env: 15, dec: 70, acc: 20, drive: 5, vol: 78 }, fx: [-15, 22, 35] },
+    Minimal: { bpm: 126, swing: 10, root: 7, d: { kick: 'x...x...x...x...', rim: '...x..x...x..x..', hat: '.x.x.x.x.x.x.x.x', mclap: '....x.......x...', cow: '......x.......x.' },
+      acc: 'x...x...x...x...', kit: { kick: [0, 0.8], cow: [5, 0.6] }, lv: { hat: 30, mclap: 35, cow: 30 },
+      bass: '. . 0 . . . 0 . . . 0 . . 0 . .', synth: { wave: 'square', cut: 30, res: 50, env: 50, dec: 10, acc: 40, drive: 20, vol: 70 }, fx: [0, 30, 15] },
+    Electro: { bpm: 128, swing: 0, root: 4, d: { kick: 'x.....x...x.....', snare: '....x.......x...', hat: 'x.x.x.x.x.x.xxx.', cow: '..x..x..........', htom: '..............x.' },
+      acc: 'x.....x...x.....', kit: { kick: [-5, 1.6], cow: [0, 0.7] }, lv: { cow: 40, htom: 55 },
+      bass: '0 . 0 12 . 0 . 7 0 . 0 12 . 10 . 7', synth: { wave: 'square', cut: 35, res: 40, env: 40, dec: 20, acc: 45, drive: 25, vol: 70 }, fx: [0, 15, 10] },
+    'Raï 80s': { bpm: 104, swing: 12, root: 2, d: { kick: 'x..x....x.x.....', snare: '....x.......x...', hat: 'x.xxx.xxx.xxx.xx', ohat: '..............x.', mclap: '....x.......x...' },
+      acc: 'x.......x.......', kit: {}, lv: { mclap: 40, hat: 50 },
+      bass: '0 . . 0 . . 7 . 5 . . 5 . . 3 .', synth: { wave: 'square', cut: 30, res: 25, env: 30, dec: 40, acc: 30, drive: 10, vol: 70 }, fx: [0, 20, 20] }
+  };
+  function gbBlankBass() { var b = []; for (var i = 0; i < 16; i++) b.push({ on: false, n: 0, o: 0, a: false, s: false }); return b; }
+  function gbParseBass(str) {
+    return str.split(/\s+/).map(function (tok) {
+      if (tok === '.') return { on: false, n: 0, o: 0, a: false, s: false };
+      var m = /^(-?\d+)([\^vas]*)$/.exec(tok), n = +m[1], f = m[2];
+      return { on: true, n: n % 12, o: Math.floor(n / 12) + (f.indexOf('^') >= 0 ? 1 : 0) - (f.indexOf('v') >= 0 ? 1 : 0), a: f.indexOf('a') >= 0, s: f.indexOf('s') >= 0 };
+    });
+  }
+  function gbDefault() {
+    var g = { bpm: 128, swing: 0, root: 9, preset: '', drums: {}, accent: new Array(16).fill(false), bass: gbBlankBass(), bassMute: false, kit: {},
+      synth: { wave: 'sawtooth', cut: 25, res: 60, env: 50, dec: 30, acc: 50, drive: 30, vol: 70 }, fx: { filter: 0, echo: 20, verb: 15 } };
+    GB_VOICES.forEach(function (id) { g.drums[id] = new Array(16).fill(false); g.kit[id] = { tune: 0, decay: 1, mute: false }; });
+    return g;
+  }
+  function gbLoad(name) {
+    var pr = GB_PRESETS[name], g = state.gb;
+    g.bpm = pr.bpm; g.swing = pr.swing; g.root = pr.root; g.preset = name;
+    GB_VOICES.forEach(function (id) {
+      var pat = pr.d[id] || ''; g.drums[id] = new Array(16).fill(false).map(function (x, i) { return pat[i] === 'x'; });
+      var k = pr.kit[id] || [0, 1]; g.kit[id] = { tune: k[0], decay: k[1], mute: false };
+      state.levels[id] = pr.lv[id] != null ? pr.lv[id] : 70;
+    });
+    g.accent = new Array(16).fill(false).map(function (x, i) { return pr.acc[i] === 'x'; });
+    g.bass = gbParseBass(pr.bass); g.bassMute = false;
+    for (var k2 in pr.synth) g.synth[k2] = pr.synth[k2];
+    g.fx = { filter: pr.fx[0], echo: pr.fx[1], verb: pr.fx[2] };
+  }
+  function gbValid(g) {
+    try {
+      return !!g && Array.isArray(g.bass) && g.bass.length === 16 && Array.isArray(g.accent) && g.accent.length === 16 && g.synth && g.fx && g.kit &&
+        GB_VOICES.every(function (id) { return g.drums[id] && g.drums[id].length === 16 && g.kit[id]; });
+    } catch (e) { return false; }
+  }
+
+  // sound: the drum machine has its own filter, echo and reverb
+  var GBN = null, acidV = null, shaperCurves = {};
+  function gbBuild() {
+    var n = { input: ctx.createGain(), filt: ctx.createBiquadFilter(), out: ctx.createGain(), echoSend: ctx.createGain(), echo: ctx.createDelay(2), fb: ctx.createGain(), damp: ctx.createBiquadFilter(), verbSend: ctx.createGain(), verb: ctx.createConvolver() };
+    n.filt.type = 'lowpass'; n.filt.frequency.value = 22000; n.filt.Q.value = 1.2;
+    n.input.connect(n.filt); n.filt.connect(n.out); n.out.connect(master);
+    n.input.connect(n.echoSend); n.echoSend.connect(n.echo); n.echo.connect(n.damp); n.damp.connect(n.fb); n.fb.connect(n.echo); n.damp.connect(n.filt);
+    n.damp.type = 'lowpass'; n.damp.frequency.value = 3500; n.fb.gain.value = 0.38;
+    var len = Math.floor(ctx.sampleRate * 2.2), ir = ctx.createBuffer(2, len, ctx.sampleRate); // a simple room: decaying noise
+    for (var c = 0; c < 2; c++) { var d = ir.getChannelData(c); for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+    n.verb.buffer = ir; n.input.connect(n.verbSend); n.verbSend.connect(n.verb); n.verb.connect(n.filt);
+    GBN = n;
+  }
+  function applyGb() {
+    if (!GBN || !state.gb) return;
+    var g = state.gb, f = g.fx.filter, t = ctx.currentTime, sd = 60 / g.bpm / 4;
+    if (f < -2) { GBN.filt.type = 'lowpass'; GBN.filt.frequency.setTargetAtTime(20000 * Math.pow(2, f / 100 * 8.4), t, 0.03); }
+    else if (f > 2) { GBN.filt.type = 'highpass'; GBN.filt.frequency.setTargetAtTime(20 * Math.pow(2, f / 100 * 9), t, 0.03); }
+    else { GBN.filt.type = 'lowpass'; GBN.filt.frequency.setTargetAtTime(22000, t, 0.03); }
+    GBN.echoSend.gain.setTargetAtTime(g.fx.echo / 100 * 0.55, t, 0.03);
+    GBN.verbSend.gain.setTargetAtTime(g.fx.verb / 100 * 0.6, t, 0.03);
+    GBN.echo.delayTime.setTargetAtTime(Math.min(1.9, sd * 3), t, 0.05); // a dotted eighth
+  }
+  function shaper(drive) { // soft clipping, stronger as Drive goes up
+    var k = Math.round(drive / 5); if (shaperCurves[k]) return shaperCurves[k];
+    var c = new Float32Array(1024), a = 1 + k * 1.2; for (var i = 0; i < 1024; i++) { var x = i / 511.5 - 1; c[i] = Math.tanh(a * x) / Math.tanh(a); }
+    return (shaperCurves[k] = c);
+  }
+  // One note of the acid bass: an oscillator through two resonant low-pass filters whose cutoff jumps up
+  // and falls back on each new note (the envelope), with more of everything on accented notes.
+  function acidVoice(t, midi, acc, dest, forCompose) {
+    var sy = state.gb ? state.gb.synth : gbDefault().synth, hz = midiHz(midi);
+    var o = ctx.createOscillator(), f1 = ctx.createBiquadFilter(), f2 = ctx.createBiquadFilter(), vca = ctx.createGain(), sh = ctx.createWaveShaper(), out = ctx.createGain();
+    o.type = sy.wave; o.frequency.setValueAtTime(hz, t);
+    var base = 55 * Math.pow(2, sy.cut / 100 * 7.6), am = acc ? 1 + sy.acc / 100 : 1;
+    var peak = Math.min(18000, base * Math.pow(2, sy.env / 100 * 4.5 * am)), dec = (0.05 + Math.pow(sy.dec / 100, 2) * 1.4) * (acc ? 0.7 : 1);
+    [f1, f2].forEach(function (f, i) { f.type = 'lowpass'; f.Q.value = i ? 0.7 : 0.7 + sy.res / 100 * 19 * (acc ? 1.1 : 1); f.frequency.setValueAtTime(peak, t); f.frequency.exponentialRampToValueAtTime(Math.max(40, base), t + dec); });
+    sh.curve = shaper(sy.drive); out.gain.value = 1 / (1 + sy.drive / 60);
+    var level = (acc ? 0.42 * (1 + sy.acc / 160) : 0.32) * Math.pow(sy.vol / 100, 1.5) * 1.6;
+    o.connect(f1); f1.connect(f2); f2.connect(vca); vca.connect(sh); sh.connect(out); out.connect(dest);
+    vca.gain.setValueAtTime(0, t); vca.gain.linearRampToValueAtTime(level, t + 0.003);
+    o.start(t);
+    if (forCompose) { vca.gain.value = level; return { osc: o, vca: vca }; } // Compose shapes the note with its own envelope
+    return { osc: o, vca: vca, level: level, end: t };
+  }
+  function acidNote(t, midi, dur, acc, slideIn, dest) {
+    if (slideIn && acidV && acidV.end >= t - 0.002) { // glide into this note without a new attack
+      acidV.osc.frequency.setTargetAtTime(midiHz(midi), t, 0.022);
+      acidV.vca.gain.cancelScheduledValues(t); acidV.vca.gain.setValueAtTime(acidV.level, t);
+    } else acidV = acidVoice(t, midi, acc, dest);
+    acidV.end = t + dur;
+    acidV.vca.gain.setTargetAtTime(0, t + dur, 0.012);
+    try { acidV.osc.stop(t + dur + 0.25); } catch (e) {}
+  }
+  function gbMidi(b) { return 12 * 3 + state.gb.root + b.n + 12 * b.o; }
+  // The grid has 13 rows: the key note up to the key note an octave higher (row 12).
+  // A step's octave shift (Up/Down) is whatever is left over after its row.
+  function bassRow(b) { return b.n === 0 && b.o >= 1 ? 12 : b.n; }
+  function bassShift(b) { return b.o - (bassRow(b) === 12 ? 1 : 0); }
+
+  // sequencer
+  var gbPlaying = false, gbTimer = null, gbStep = 0, gbBase = 0, gbQ = [], gbSkip = {}, gbShown = -1, gbRec = false;
+  function gbStepAt(i, t, sd, dest) {
+    var g = state.gb, vel = g.accent[i] ? 1.3 : 0.85;
+    drumDest = dest; rollLen = sd;
+    GB_VOICES.forEach(function (id) { if (g.drums[id][i] && !g.kit[id].mute && !(gbSkip[id] > t)) hit(id, t, vel); });
+    drumDest = null;
+    var b = g.bass[i];
+    if (b.on && !g.bassMute) {
+      var prev = g.bass[(i + 15) % 16], next = g.bass[(i + 1) % 16], slideOut = b.s && next.on;
+      acidNote(t, gbMidi(b), slideOut ? sd * 1.05 : sd * 0.55, b.a, prev.on && prev.s, dest);
+    }
+  }
+  function gbSched() {
+    var g = state.gb, sd = 60 / g.bpm / 4;
+    while (gbBase < ctx.currentTime + 0.12) {
+      var t = gbBase + (gbStep % 2 ? g.swing / 100 * sd * 0.66 : 0);
+      gbStepAt(gbStep, t, sd, GBN.input);
+      gbQ.push({ step: gbStep, time: t });
+      gbStep = (gbStep + 1) % 16; gbBase += sd;
+    }
+  }
+  function gbPlay() {
+    ensureAudio(); if (playing) stop(); if (cPlaying) cStop();
+    gbPlaying = true; gbStep = 0; gbBase = ctx.currentTime + 0.06; gbQ = []; acidV = null; applyGb();
+    gbSched(); gbTimer = setInterval(gbSched, 25);
+    $('gbPlay').textContent = '■ Stop'; $('gbPlay').classList.add('playing');
+  }
+  function gbStop() {
+    gbPlaying = false; clearInterval(gbTimer); gbTimer = null; gbQ = []; gbShowStep(-1);
+    if (gbRec) gbSetRec(false);
+    $('gbPlay').textContent = '▶ Play'; $('gbPlay').classList.remove('playing');
+  }
+  function gbToggle() { gbPlaying ? gbStop() : gbPlay(); }
+  function gbFrame() { var cur = null; while (gbQ.length && gbQ[0].time <= ctx.currentTime) cur = gbQ.shift(); if (cur) gbShowStep(cur.step); }
+  function gbRecordHit(id) {
+    if (!gbRec || !gbPlaying || GB_VOICES.indexOf(id) < 0) return;
+    var sd = 60 / state.gb.bpm / 4, now = ctx.currentTime - (ctx.outputLatency || 0), step = ((Math.round(gbStep - (gbBase - now) / sd) % 16) + 16) % 16;
+    gbSkip[id] = ctx.currentTime + sd * 0.7; // do not replay the tap the player just made
+    if (!state.gb.drums[id][step]) { state.gb.drums[id][step] = true; state.gb.preset = ''; gbMarkCells(); save(); }
+  }
+  function gbSetRec(on) { gbRec = on; $('gbRec').classList.toggle('sel', on); $('gbRec').setAttribute('aria-pressed', on); $('gbRec').textContent = on ? '● Recording taps' : '● Record taps'; }
+
+  // page
+  var gbCells = { drums: {}, accent: [], bass: [], oct: [], acc: [], slide: [] }, gbCols = [], gbPadEls = {};
+  function gbFlash(id) { var p = gbPadEls[id]; if (!p) return; p.classList.add('hit'); clearTimeout(p._t); p._t = setTimeout(function () { p.classList.remove('hit'); }, 90); }
+  function gbShowStep(n) {
+    if (n === gbShown) return;
+    if (gbShown >= 0) gbCols[gbShown].forEach(function (e) { e.classList.remove('now'); });
+    if (n >= 0) gbCols[n].forEach(function (e) { e.classList.add('now'); });
+    gbShown = n;
+  }
+  var gbPaint = null;
+  window.addEventListener('pointerup', function () { gbPaint = null; });
+  function gbCell(grid, i, label, get, set, extra) {
+    var b = el('button', 'cell' + (Math.floor(i / 4) % 2 === 0 ? ' alt' : '') + (i % 4 === 0 && i ? ' beat' : '') + (extra || '')); b.type = 'button';
+    b.setAttribute('aria-label', label + ', step ' + (i + 1));
+    b.addEventListener('pointerdown', function (e) { if (e.pointerType === 'mouse' && e.button === 0) { e.preventDefault(); gbPaint = !get(); set(gbPaint); b._p = true; } });
+    b.addEventListener('pointerenter', function () { if (gbPaint !== null && get() !== gbPaint) set(gbPaint); });
+    b.addEventListener('click', function () { if (b._p) { b._p = false; return; } set(!get()); });
+    grid.appendChild(b); gbCols[i].push(b); return b;
+  }
+  function gbBuildGrids() {
+    var dg = $('gbDrumGrid'), bg = $('gbBassGrid'), g = state.gb, i;
+    dg.textContent = ''; bg.textContent = ''; gbCols = []; for (i = 0; i < 16; i++) gbCols.push([]);
+    GB_VOICES.forEach(function (id) {
+      var lab = el('button', 'lab', GB_NAMES[id]); lab.type = 'button'; lab.title = 'Mute or unmute';
+      lab.addEventListener('click', function () { g.kit[id].mute = !g.kit[id].mute; gbMarkCells(); save(); });
+      dg.appendChild(lab); gbCells.drums[id] = { lab: lab, cells: [] };
+      for (i = 0; i < 16; i++) (function (i) {
+        gbCells.drums[id].cells.push(gbCell(dg, i, GB_NAMES[id], function () { return g.drums[id][i]; }, function (v) {
+          g.drums[id][i] = v; g.preset = ''; gbMarkCells(); save();
+          if (v && !gbPlaying) { ensureAudio(); drumDest = GBN.input; hit(id, ctx.currentTime, g.accent[i] ? 1.3 : 0.85); drumDest = null; }
+        }));
+      })(i);
+    });
+    dg.appendChild(el('span', 'sep'));
+    var al = el('span', 'lab', 'Accent'); dg.appendChild(al);
+    var ar = []; for (i = 0; i < 16; i++) (function (i) { ar.push(gbCell(dg, i, 'Accent', function () { return g.accent[i]; }, function (v) { g.accent[i] = v; g.preset = ''; gbMarkCells(); save(); })); })(i);
+    ar.forEach(function (c) { c.classList.add('acc-cell'); }); gbCells.accent = ar;
+    // bass: 13 note rows (the key note up to its octave), then Up/Down, Accent and Slide
+    for (var r = 12; r >= 0; r--) (function (r) {
+      var lab = el('span', 'lab' + (r % 12 === 0 ? ' rootrow' : ''), NOTE_NAMES[(g.root + r) % 12] + (r === 12 ? ' ↑' : '')); bg.appendChild(lab);
+      gbCells.bass[r] = [];
+      for (var i2 = 0; i2 < 16; i2++) (function (i) {
+        gbCells.bass[r].push(gbCell(bg, i, 'Bass note ' + NOTE_NAMES[(g.root + r) % 12], function () { var b = g.bass[i]; return b.on && bassRow(b) === r; }, function (v) {
+          var b = g.bass[i], shift = bassShift(b);
+          if (v) { b.on = true; b.n = r % 12; b.o = (r === 12 ? 1 : 0) + shift; }
+          else b.on = false;
+          g.preset = ''; gbMarkCells(); save();
+          if (v && !gbPlaying) { ensureAudio(); acidV = null; acidNote(ctx.currentTime, gbMidi(b), 0.25, b.a, false, GBN.input); }
+        }));
+      })(i2);
+    })(r);
+    bg.appendChild(el('span', 'sep'));
+    [['oct', 'Up / Down'], ['acc', 'Accent'], ['slide', 'Slide']].forEach(function (row) {
+      bg.appendChild(el('span', 'lab', row[1])); gbCells[row[0]] = [];
+      for (var i3 = 0; i3 < 16; i3++) (function (i) {
+        var b = el('button', 'cell txt' + (Math.floor(i / 4) % 2 === 0 ? ' alt' : '') + (i % 4 === 0 && i ? ' beat' : '')); b.type = 'button';
+        b.setAttribute('aria-label', row[1] + ', step ' + (i + 1));
+        b.addEventListener('click', function () {
+          var s2 = g.bass[i];
+          if (row[0] === 'oct') { var sh = bassShift(s2), nx = sh === 0 ? 1 : sh === 1 ? -1 : 0; s2.o = (bassRow(s2) === 12 ? 1 : 0) + nx; } else if (row[0] === 'acc') s2.a = !s2.a; else s2.s = !s2.s;
+          g.preset = ''; gbMarkCells(); save();
+        });
+        bg.appendChild(b); gbCols[i].push(b); gbCells[row[0]].push(b);
+      })(i3);
+    });
+  }
+  function gbMarkCells() {
+    var g = state.gb;
+    GB_VOICES.forEach(function (id) {
+      var c = gbCells.drums[id]; c.lab.classList.toggle('muted', g.kit[id].mute); c.lab.setAttribute('aria-pressed', g.kit[id].mute);
+      c.cells.forEach(function (b, i) { setCell(b, g.drums[id][i]); });
+      if (gbPadEls[id]) gbPadEls[id].classList.toggle('muted', g.kit[id].mute);
+    });
+    gbCells.accent.forEach(function (b, i) { setCell(b, g.accent[i]); });
+    for (var r = 0; r <= 12; r++) gbCells.bass[r].forEach(function (b, i) { setCell(b, g.bass[i].on && bassRow(g.bass[i]) === r); });
+    for (var i = 0; i < 16; i++) {
+      var s3 = g.bass[i], sh = bassShift(s3);
+      gbCells.oct[i].textContent = sh > 0 ? '↑' : sh < 0 ? '↓' : ''; setCell(gbCells.oct[i], sh !== 0);
+      setCell(gbCells.acc[i], s3.a); setCell(gbCells.slide[i], s3.s);
+    }
+    $('gbMuteBass').classList.toggle('sel', g.bassMute); $('gbMuteBass').setAttribute('aria-pressed', g.bassMute);
+    Array.prototype.forEach.call($('gbPresets').children, function (b) { b.classList.toggle('sel', b.dataset.name === g.preset); });
+  }
+  function gbVoiceUI() {
+    var id = $('gbVoice').value, k = state.gb.kit[id];
+    $('gbTune').value = k.tune; $('gbTuneOut').textContent = (k.tune > 0 ? '+' : '') + k.tune;
+    $('gbDecay').value = Math.round(k.decay * 100); $('gbDecayOut').textContent = Math.round(k.decay * 100);
+    $('gbLevel').value = state.levels[id];
+  }
+  var GB_SLIDERS = { gbCut: 'cut', gbRes: 'res', gbEnv: 'env', gbDec: 'dec', gbAcc: 'acc', gbDrive: 'drive', gbVol: 'vol' };
+  function gbRender() {
+    var g = state.gb;
+    gbBuildGrids(); gbMarkCells();
+    $('gbBpm').value = g.bpm; $('gbBpmOut').textContent = g.bpm; $('gbSwing').value = g.swing; $('gbSwingOut').textContent = g.swing;
+    $('gbRoot').value = g.root; $('gbWave').value = g.synth.wave;
+    Object.keys(GB_SLIDERS).forEach(function (k) { $(k).value = g.synth[GB_SLIDERS[k]]; });
+    $('gbFilt').value = g.fx.filter; $('gbFiltOut').textContent = g.fx.filter < -2 ? 'low-pass' : g.fx.filter > 2 ? 'high-pass' : 'off';
+    $('gbEcho').value = g.fx.echo; $('gbVerb').value = g.fx.verb;
+    gbVoiceUI(); if (ctx) applyGb();
+  }
+  function gbNewLine() { // a random acid line in the minor pentatonic, with a few accents and slides
+    var pool = [0, 0, 0, 3, 5, 7, 10, 12], b = gbBlankBass();
+    b.forEach(function (s2, i) {
+      s2.on = i === 0 || Math.random() < 0.68; s2.n = pool[Math.floor(Math.random() * pool.length)] % 12;
+      s2.o = Math.random() < 0.18 ? 1 : 0; if (s2.n === 0 && Math.random() < 0.25) s2.o = 1;
+      s2.a = Math.random() < 0.25; s2.s = Math.random() < 0.2;
+    });
+    state.gb.bass = b; state.gb.preset = ''; gbMarkCells(); save();
+  }
+  function gbToCompose() { // add the drums and the bass line to Compose, 8 bars long
+    var g = state.gb, bars = Math.min(8, C.bars), note = $('gbNote');
+    if (C.tracks.length > 10) { note.textContent = 'Compose already has ' + C.tracks.length + ' tracks. Remove a couple there first.'; return; }
+    var dt = { id: cNew('t'), kind: 'perc', inst: 'machine', vol: 85, mute: false, solo: false, octave: 0, clips: [] }, k = percClip('machine', 0, bars);
+    KITS.machine.strokes.forEach(function (id) { if (g.drums[id] && !g.kit[id].mute) for (var i = 0; i < bars * 16; i++) k.steps[id][i] = g.drums[id][i % 16]; });
+    k.id = cNew('c'); dt.clips.push(k); C.tracks.push(dt);
+    if (!g.bassMute && g.bass.some(function (b) { return b.on; })) {
+      var bt = { id: cNew('t'), kind: 'mel', inst: 'Acid bass', vol: 80, mute: false, solo: false, octave: 2, clips: [] }, notes = [];
+      for (var bar = 0; bar < bars; bar++) g.bass.forEach(function (b, i) {
+        if (!b.on) return;
+        var midi = gbMidi(b), best = 0; for (var r = 1; r <= 14; r++) if (Math.abs(cMidi(bt, r) - midi) < Math.abs(cMidi(bt, best) - midi)) best = r;
+        notes.push({ s: bar * 16 + i, r: best, l: b.s ? 2 : 1 });
+      });
+      bt.clips.push({ id: cNew('c'), start: 0, len: bars, notes: notes }); C.tracks.push(bt);
+    }
+    C.bpm = g.bpm; save();
+    location.hash = '#compose';
+  }
+  function gbDownload() {
+    var b = $('gbWav'), note = $('gbNote');
+    b.disabled = true; b.textContent = 'Preparing the file…'; note.textContent = '';
+    ensureAudio();
+    var g = state.gb, sd = 60 / g.bpm / 4;
+    renderOffline(8 * 16 * sd + 2.5, 0.3, function () {
+      for (var i = 0; i < 128; i++) gbStepAt(i % 16, 0.3 + i * sd + (i % 2 ? g.swing / 100 * sd * 0.66 : 0), sd, GBN.input);
+    }).then(function (r) {
+      var blob = wavBlob(r.buf, r.skip), url = URL.createObjectURL(blob), a = el('a');
+      a.href = url; a.download = 'drum-machine-' + ((g.preset || 'loop').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'loop') + '-' + g.bpm + 'bpm.wav';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
+      note.textContent = 'Saved ' + a.download + '. If nothing downloaded, your browser may have blocked it: try the live site.';
+    }).catch(function () { note.textContent = 'The file could not be made in this browser. Try the latest Chrome, Firefox or Safari.'; })
+      .then(function () { b.disabled = false; b.textContent = '⤓ Download 8 bars'; });
+  }
+
+  if (!gbValid(state.gb)) { state.gb = gbDefault(); gbLoad('Techno'); }
+  (function gbWire() {
+    Object.keys(GB_PRESETS).forEach(function (name) {
+      var b = el('button', 'chip', name); b.type = 'button'; b.dataset.name = name;
+      b.addEventListener('click', function () { gbLoad(name); gbRender(); save(); });
+      $('gbPresets').appendChild(b);
+    });
+    GB_VOICES.forEach(function (id) {
+      var b = el('button', 'bpad'); b.type = 'button'; b.appendChild(el('span', '', GB_NAMES[id]));
+      var key = DRUM_BY[id].key; if (key) b.appendChild(el('small', '', key));
+      b.addEventListener('pointerdown', function (e) { e.preventDefault(); tap(id); });
+      b.addEventListener('keydown', function (e) { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); e.stopPropagation(); tap(id); } });
+      $('gbPads').appendChild(b); gbPadEls[id] = b;
+      var o = el('option', '', GB_NAMES[id]); o.value = id; $('gbVoice').appendChild(o);
+    });
+    NOTE_NAMES.forEach(function (n, i) { var o = el('option', '', n); o.value = i; $('gbRoot').appendChild(o); });
+    $('gbPlay').addEventListener('click', gbToggle);
+    $('gbRec').addEventListener('click', function () { gbSetRec(!gbRec); if (gbRec && !gbPlaying) gbPlay(); });
+    $('gbBpm').addEventListener('input', function () { state.gb.bpm = +this.value; $('gbBpmOut').textContent = this.value; applyGb(); save(); });
+    $('gbSwing').addEventListener('input', function () { state.gb.swing = +this.value; $('gbSwingOut').textContent = this.value; save(); });
+    $('gbRoot').addEventListener('change', function () { state.gb.root = +this.value; gbRender(); save(); });
+    $('gbWave').addEventListener('change', function () { state.gb.synth.wave = this.value; state.gb.preset = ''; gbMarkCells(); save(); });
+    Object.keys(GB_SLIDERS).forEach(function (k) { $(k).addEventListener('input', function () { state.gb.synth[GB_SLIDERS[k]] = +this.value; save(); }); });
+    $('gbVoice').addEventListener('change', gbVoiceUI);
+    $('gbTune').addEventListener('input', function () { var id = $('gbVoice').value; state.gb.kit[id].tune = +this.value; gbVoiceUI(); save(); });
+    $('gbDecay').addEventListener('input', function () { var id = $('gbVoice').value; state.gb.kit[id].decay = +this.value / 100; gbVoiceUI(); save(); });
+    $('gbLevel').addEventListener('input', function () { state.levels[$('gbVoice').value] = +this.value; save(); });
+    ['gbTune', 'gbDecay'].forEach(function (k) { $(k).addEventListener('change', function () { if (!gbPlaying) tap($('gbVoice').value); }); });
+    $('gbFilt').addEventListener('input', function () { var v = +this.value; state.gb.fx.filter = v; $('gbFiltOut').textContent = v < -2 ? 'low-pass' : v > 2 ? 'high-pass' : 'off'; applyGb(); save(); });
+    $('gbFiltReset').addEventListener('click', function () { state.gb.fx.filter = 0; $('gbFilt').value = 0; $('gbFiltOut').textContent = 'off'; applyGb(); save(); });
+    $('gbEcho').addEventListener('input', function () { state.gb.fx.echo = +this.value; applyGb(); save(); });
+    $('gbVerb').addEventListener('input', function () { state.gb.fx.verb = +this.value; applyGb(); save(); });
+    $('gbClearDrums').addEventListener('click', function () { GB_VOICES.forEach(function (id) { state.gb.drums[id] = new Array(16).fill(false); }); state.gb.accent = new Array(16).fill(false); state.gb.preset = ''; gbMarkCells(); save(); });
+    $('gbClearLine').addEventListener('click', function () { state.gb.bass = gbBlankBass(); state.gb.preset = ''; gbMarkCells(); save(); });
+    $('gbNewLine').addEventListener('click', gbNewLine);
+    $('gbMuteBass').addEventListener('click', function () { state.gb.bassMute = !state.gb.bassMute; gbMarkCells(); save(); });
+    $('gbToCompose').addEventListener('click', gbToCompose);
+    $('gbWav').addEventListener('click', gbDownload);
+  })();
+
   // ---------- instrument pages (#darbuka, #oud ...) ----------
   (function () {
     var a = el('a', 'chip', 'Studio'); a.href = '#'; a.dataset.page = ''; $('instNav').appendChild(a);
@@ -2403,12 +2899,15 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var g = PG();
     if (playing) stop();
     if (cPlaying) cStop();
+    if (gbPlaying) gbStop();
     Object.keys(sv).forEach(svStop); Object.keys(held).forEach(function (m) { noteOff(+m); }); holdsClear();
     document.body.classList.toggle('page', !!g);
     document.body.classList.toggle('page-perc', !!g && g.kind === 'perc');
     document.body.classList.toggle('page-mel', !!g && g.kind === 'mel');
     document.body.classList.toggle('page-sounds', !!g && !!g.sounds);
-    $('focus').hidden = !g || g.kind === 'compose';
+    $('focus').hidden = !g || g.kind === 'compose' || g.kind === 'groove';
+    $('groove').hidden = !(g && g.kind === 'groove');
+    document.body.classList.toggle('page-groove', !!g && g.kind === 'groove');
     $('composer').hidden = !(g && g.kind === 'compose');
     document.body.classList.toggle('page-compose', !!g && g.kind === 'compose');
     if (cRec) cRecSet(false);
@@ -2417,7 +2916,8 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     if (g) {
       $('fName').textContent = g.name;
       $('fAbout').innerHTML = g.about; // our own text, defined above
-      if (g.kind === 'compose') { cRender(); $('cClick').classList.toggle('sel', !!state.cClick); $('cClick').setAttribute('aria-pressed', !!state.cClick); }
+      if (g.kind === 'groove') gbRender();
+      else if (g.kind === 'compose') { cRender(); $('cClick').classList.toggle('sel', !!state.cClick); $('cClick').setAttribute('aria-pressed', !!state.cClick); }
       else if (g.kind === 'perc') { state.perc = g.sim; renderSim(); }
       else {
         var solo = state.tracks.solo;
@@ -2460,6 +2960,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       if (cur) showStep(cur.pat === (state.page ? -1 : state.cur) ? cur.step : -1);
     }
     if (cPlaying) cFrame();
+    if (gbPlaying) gbFrame();
     if (!scope.offsetParent) return;
     if (tick++ % 60 === 0) stroke = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || stroke;
     analyser.getByteTimeDomainData(wave);

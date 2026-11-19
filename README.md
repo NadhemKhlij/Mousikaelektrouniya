@@ -24,11 +24,11 @@ Browser instruments for Tunisian percussion and raï music, built with the Web A
     [tar](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#tar),
     [tbal](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#tbal),
     [shqashiq](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#shqashiq),
-    [drum machine](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#drum-machine),
     [oud](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#oud),
     [gasba](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#gasba),
     [zorna](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#zorna) and the
     [raï keyboard](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#keyboard).
+  - **Drum machine** ([open](https://nadhemkhlij.github.io/Mousikaelektrouniya/bendir-rai/#drum-machine)): for electronic music. It has ten analog-style drums with an accent row and per-drum tune and decay, and a 303-style acid bass line with accents and slides. Add a DJ filter, echo, reverb and swing, and start from a style: Techno, House, Acid house, Deep house, Minimal, Electro or Raï 80s. Record your taps, download 8 bars as audio, or send it all to Compose.
 - **Sixteen Steps** (`sixteen-steps/`): the first prototype, a simple 16-step drum machine and synth, fully synthesized.
 
 Melodies follow Arabic maqamat (Hijaz, Kurd, Nahawand, Bayati, Rast, Ajam), including quarter tones.
