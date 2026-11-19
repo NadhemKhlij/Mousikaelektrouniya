@@ -62,7 +62,9 @@ Then open <http://localhost:8000/>. Edit a file, save it and reload the page; th
 
 ```
 index.html              home page that links to everything
-bendir-rai/index.html   the main app: HTML, CSS and JavaScript in one file
+bendir-rai/index.html   the main app's page
+bendir-rai/css/app.css  its styles
+bendir-rai/js/*.js      its code, in six files (see CONTRIBUTING.md)
 bendir-rai/s/*.json     sound packs (recordings, base64-encoded)
 bendir-rai/manifest.webmanifest, sw.js, icons/   what makes the app installable and usable offline
 og.png                  the picture shown when a link to the site is shared

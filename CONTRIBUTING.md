@@ -26,11 +26,26 @@ You need Python 3 for the local server. The sound-pack builder also needs [ffmpe
 
 ## How the app is organised
 
-Everything for the main app is in `bendir-rai/index.html`: the CSS in `<style>`, the page structure, then one `<script>`. The script is split into sections marked with comments like `// ---------- audio ----------`; search for `// ----------` to jump between them.
+The main app lives in `bendir-rai/`:
+
+| File | What's in it |
+|---|---|
+| `index.html` | The page structure (every panel and control), the link-preview tags, and the list of scripts. |
+| `css/app.css` | All the styles. Colours are tokens at the top, with the dark-mode values just below. |
+| `js/core.js` | The music data (`DRUMS`, `SCALES`, `SOUNDS`, `BEATS`, `PAGES`), the saved state, and `save`. |
+| `js/audio.js` | The audio engine: mixer, sound packs, drum voices, the oud model, melodic voices. |
+| `js/studio.js` | The studio: sequencer, percussion simulators, step grids, song bar, tracks, keyboard, oud neck and flute. |
+| `js/compose.js` | The Compose page: timeline, editors, recording (instruments and voice), singing effects, undo, download, share links. |
+| `js/drum-machine.js` | The Drum machine page: drums, acid bass, chords, effects, patterns, beat links, your own sounds. |
+| `js/app.js` | Starts everything: instrument pages and routing, then the playhead drawing. |
+
+The scripts are plain JavaScript with no build step and no modules: they share one scope and load **in the order listed in `index.html`** (each with `defer`). A file can use anything from the files before it at any time, and anything from later files inside functions that run after the page has loaded (click handlers, playback). Keep that order when adding a file. Inside each file, sections are marked with comments like `// ---------- audio ----------`; search for `// ----------` to jump between them.
+
+Because the names are shared, avoid top-level names the browser already uses (`stop`, `name`, `top`, `status`, `open`, `close`); the studio's stop button calls `stopStudio` for this reason.
 
 ### Data you will most often change
 
-These tables near the top of the script describe the music; most features read from them.
+These tables in `js/core.js` describe the music; most features read from them.
 
 | Name | What it holds |
 |---|---|
@@ -124,7 +139,7 @@ Add an entry to `PAGES`. Percussion pages point at a `SIMS` key; melodic pages n
   - the page itself is always fetched fresh when online, so changes show up straight away;
   - sounds and fonts come from the cache and are refreshed in the background.
 
-  If you rename or remove a file listed in `CORE` at the top of `sw.js`, update that list. To force everyone's cache to clear, change `CACHE` (for example to `bendir-rai-v2`).
+  The page, scripts and stylesheet are always fetched fresh when online, so an update arrives whole. If you add, rename or remove a script or stylesheet, update the `CODE` list at the top of `sw.js`. To force everyone's cache to clear, change `CACHE` (for example to `bendir-rai-v2`).
 - The link-preview tags (`og:` and `twitter:`) are in the `<head>` of `bendir-rai/index.html` and `index.html`. The preview picture is `og.png` (1200 × 630).
 
 ## Rules of the road
