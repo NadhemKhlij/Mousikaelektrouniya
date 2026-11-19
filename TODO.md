@@ -57,5 +57,7 @@ Once the recordings are in hand, they get trimmed, levelled and packed into the 
 - [x] Drum machine: four patterns (A to D) that switch on the bar line, chain and copy.
 - [x] Drum machine: chords (organ, stab, pad), sidechain pump, recorded filter moves, and beats shared as links.
 - [ ] Compose: 6/8 time for the Tunisian rhythms that use it (fazzani, khatm, stambeli).
-- [ ] Record your voice, since raï is built around the singer.
+- [x] Record your voice: Voice tracks in Compose.
+- [x] Load your own sounds onto the drum-machine pads.
+- [ ] Voice: effects made for singing (autotune-style pitch correction, a vocal reverb).
 - [ ] More rhythms: add the ones Nadhem knows as presets.

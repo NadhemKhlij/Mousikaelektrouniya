@@ -25,6 +25,7 @@
   --skin-ink: #3b2f1c;
   --machine: #2a3550;
   --machine-ink: #e7ecf4;
+  --voice: #7a3e9d;
   --z-center: #e6c48c; --z-ring: #f5e8cd; --z-rimL: #e2b5a0; --z-rimR: #d6c494; --z-rim: #d9c7a4;
   --metal: #d8dde3; --metal-edge: #8a939e;
   --wood: #9a6a3c; --wood-hi: #b7834f; --wood-lo: #7c532c; --wood-ink: #fbefdc; --nut: #efe6d2; --string: #ece6d6; --marker: #f6d78b;
@@ -42,7 +43,7 @@
     --bg: #0f141c; --panel: #171e29; --ink: #e7ecf4; --muted: #8f9bb0; --line: #2c3748;
     --cell: #242e3d; --cell-alt: #303c4f; --drum: #ff6d7c; --synth: #74b0ff; --song: #e7ecf4;
     --skin: #e6d9bf; --skin-edge: #b9a57f; --skin-ink: #2c2314;
-    --machine: #2f3b52; --machine-ink: #e7ecf4;
+    --machine: #2f3b52; --machine-ink: #e7ecf4; --voice: #c79bf2;
     --on-accent: #0f141c; --key-white: #dde4ee; --key-black: #080c12;
     color-scheme: dark;
   }
@@ -51,7 +52,7 @@
   --bg: #0f141c; --panel: #171e29; --ink: #e7ecf4; --muted: #8f9bb0; --line: #2c3748;
   --cell: #242e3d; --cell-alt: #303c4f; --drum: #ff6d7c; --synth: #74b0ff; --song: #e7ecf4;
   --skin: #e6d9bf; --skin-edge: #b9a57f; --skin-ink: #2c2314;
-  --machine: #2f3b52; --machine-ink: #e7ecf4;
+  --machine: #2f3b52; --machine-ink: #e7ecf4; --voice: #c79bf2;
   --on-accent: #0f141c; --key-white: #dde4ee; --key-black: #080c12;
   color-scheme: dark;
 }
@@ -177,6 +178,11 @@ kbd { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--li
 .clip { position: absolute; top: 6px; bottom: 6px; border-radius: 7px; overflow: hidden; cursor: grab; touch-action: none; color: var(--on-accent); border: 1px solid transparent; }
 .clip.perc { background: var(--drum); }
 .clip.mel { background: var(--synth); }
+.clip.voice { background: var(--voice); }
+.voice-wave { height: 90px; border-radius: 8px; background: var(--voice); color: var(--on-accent); position: relative; overflow: hidden; }
+.voice-wave svg { position: absolute; inset: 6px; width: calc(100% - 12px); height: calc(100% - 12px); }
+.gb-pads .bpad.own { box-shadow: inset 0 0 0 2px var(--synth); }
+.gb-pads .bpad.drop { box-shadow: inset 0 0 0 3px var(--drum); }
 .clip.sel { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ink); }
 .clip .cname { position: absolute; left: 6px; top: 2px; right: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 .clip svg { position: absolute; left: 4px; right: 12px; top: 18px; bottom: 4px; width: calc(100% - 16px); height: calc(100% - 22px); pointer-events: none; }
@@ -508,7 +514,13 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
         <div class="ctl"><label for="gbTune">Tune <output id="gbTuneOut">0</output></label><input id="gbTune" type="range" min="-12" max="12" step="1"></div>
         <div class="ctl"><label for="gbDecay">Decay <output id="gbDecayOut">100</output>%</label><input id="gbDecay" type="range" min="25" max="250" step="5"></div>
         <div class="ctl"><label for="gbLevel">Level</label><input id="gbLevel" type="range" min="0" max="100" step="1"></div>
+        <div class="ctl"><span class="lbl">Sound</span>
+          <div class="chips"><button class="chip" id="gbLoadBtn" type="button">Load your own sound…</button><button class="chip" id="gbBuiltIn" type="button" hidden>Use the built-in sound</button></div>
+          <span class="hint" id="gbSampleName"></span>
+          <input type="file" id="gbFile" accept="audio/*,.wav,.mp3,.ogg,.flac,.m4a,.aif,.aiff" hidden>
+        </div>
       </div>
+      <p class="hint" id="gbSampleNote" role="status">You can also drop an audio file straight onto a pad. Your sounds stay in this browser and are not included in shared links.</p>
     </div>
 
     <div class="gb-part acid-part">
@@ -962,6 +974,15 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   }
   // Drum-machine voices, synthesized like the classic analog machines. Tune (semitones) and decay
   // come from the Drum machine page's "Shape a drum" settings.
+  // A sound you loaded onto a drum-machine pad replaces its built-in voice (tune and decay still apply).
+  var userBufs = {};
+  function playUser(id, t, v) {
+    var b = userBufs[id], k = state.gb.kit[id], src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = b; src.playbackRate.value = Math.pow(2, (k.tune || 0) / 12);
+    var dur = Math.max(0.03, b.duration * Math.min(1, k.decay || 1) / src.playbackRate.value);
+    g.gain.setValueAtTime(v * 0.9, t); g.gain.setTargetAtTime(0, t + Math.max(0.01, dur - 0.04), 0.012);
+    src.connect(g); g.connect(drumDest || drumBus); src.start(t); src.stop(t + dur + 0.1);
+  }
   function kp(id) { var k = state.gb && state.gb.kit && state.gb.kit[id]; return { tf: Math.pow(2, ((k && k.tune) || 0) / 12), dm: (k && k.decay) || 1 }; }
   var HAT_HZ = [205.3, 304.4, 369.6, 522.7, 540, 800], ohatG = null;
   function metal(t, v, tf, dur, band) { // six detuned square waves through filters: the metallic hiss of analog hats and cymbals
@@ -1025,6 +1046,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   function hit(id, t, vel) {
     var v = Math.pow(state.levels[id] / 100, 2) * 1.2 * vel * (0.9 + Math.random() * 0.1);
     if (v <= 0.001) return;
+    if (userBufs[id]) { playUser(id, t, v); return; }
     if (MACHINE[id]) { MACHINE[id](t, v); return; }
     if (id === 'roll') { // four quick soft strokes, alternating hands
       for (var i = 0; i < 4; i++) playStroke(i % 2 ? 'ka' : 'tak', t + i * rollLen / 4, v * (0.55 + 0.12 * i), true);
@@ -1921,6 +1943,29 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     markTies();
     applyMix();
   }
+  // ---------- audio kept in this browser (voice recordings and sounds you load) ----------
+  // Too big for the normal saved data, so it goes into IndexedDB. If that is not available (some private
+  // windows), it is kept in memory until the page is closed.
+  var idbP = null, memAudio = {}, audioKept = true;
+  function idb() {
+    if (!idbP) idbP = new Promise(function (res, rej) {
+      try { var r = indexedDB.open('bendir-rai', 1); r.onupgradeneeded = function () { r.result.createObjectStore('audio'); }; r.onsuccess = function () { res(r.result); }; r.onerror = function () { rej(r.error); }; } catch (e) { rej(e); }
+    });
+    return idbP;
+  }
+  function idbReq(mode, fn) {
+    return idb().then(function (db) { return new Promise(function (res, rej) { var tx = db.transaction('audio', mode), r = fn(tx.objectStore('audio')); tx.oncomplete = function () { res(r && r.result); }; tx.onerror = tx.onabort = function () { rej(tx.error); }; }); });
+  }
+  function audioPut(key, val) { memAudio[key] = val; return idbReq('readwrite', function (st) { return st.put(val, key); }).then(function () { return true; }, function () { audioKept = false; return false; }); }
+  function audioGet(key) { if (memAudio[key]) return Promise.resolve(memAudio[key]); return idbReq('readonly', function (st) { return st.get(key); }).catch(function () { return null; }); }
+  function audioDel(key) { delete memAudio[key]; return idbReq('readwrite', function (st) { return st.delete(key); }).catch(function () {}); }
+  function audioTidy() { // remove recordings and sounds nothing uses any more
+    var used = {};
+    [state.gb, state.gbBackup && state.gbBackup.gb].forEach(function (g) { if (g && g.kit) GB_VOICES.forEach(function (id) { var k = g.kit[id]; if (k && k.sample) used[k.sample.key] = 1; }); });
+    [state.compose, state.composeBackup && state.composeBackup.song].forEach(function (c) { if (c) c.tracks.forEach(function (t) { if (t.kind === 'voice') t.clips.forEach(function (k) { used[k.audio] = 1; }); }); });
+    idbReq('readonly', function (st) { return st.getAllKeys(); }).then(function (keys) { (keys || []).forEach(function (k) { if (!used[k]) audioDel(k); }); }).catch(function () {});
+  }
+
   // ---------- composer: instruments on a timeline ----------
   var KITS = {
     darbuka: { name: 'Darbuka', strokes: ['dum', 'tak', 'ka', 'slap', 'roll'] },
@@ -1938,6 +1983,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     try {
       if (!c || !Array.isArray(c.tracks) || !c.bars) return false;
       return c.tracks.every(function (t) {
+        if (t.kind === 'voice') return Array.isArray(t.clips) && t.clips.every(function (k) { return k.len >= 1 && typeof k.audio === 'string'; });
         if (t.kind === 'perc' ? !KITS[t.inst] : !SOUNDS[t.inst]) return false;
         return Array.isArray(t.clips) && t.clips.every(function (k) { return k.len >= 1 && (t.kind === 'perc' ? k.steps : Array.isArray(k.notes)); });
       });
@@ -1994,7 +2040,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     if (trackOut[id]) return trackOut[id];
     var tr = C && cTrack(id), o = ctx.createGain();
     if (tr && tr.kind === 'perc') o.connect(drumBus);
-    else { o.connect(synthBus); var snd = ctx.createGain(); o.connect(snd); snd.connect(delayNode); trackSend[id] = snd; snd.gain.value = (compCache[id] ? compCache[id].delay : 10) / 100 * 0.7; }
+    else { o.connect(synthBus); var snd = ctx.createGain(); o.connect(snd); snd.connect(delayNode); trackSend[id] = snd; snd.gain.value = (tr && tr.kind === 'voice' ? tr.echo || 0 : compCache[id] ? compCache[id].delay : 10) / 100 * 0.7; }
     trackOut[id] = o; cMix(); return o;
   }
   function cMix() {
@@ -2033,7 +2079,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       var sd = 60 / C.bpm / 4, bars = songEnd(), anySolo = C.tracks.some(function (t) { return t.solo; });
       return renderOffline(bars * 16 * sd + 2.5, 0.3, function () {
         C.tracks.forEach(function (t) { if (t.kind === 'mel') compTS(t); ensureOut(t.id); });
-        for (var i = 0; i < bars * 16; i++) cStepAt(i, 0.3 + i * sd, sd, anySolo);
+        for (var i = 0; i < bars * 16; i++) cStepAt(i, 0.3 + i * sd, sd, anySolo, i === 0);
       });
     });
   }
@@ -2079,7 +2125,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   function bitsHex(a, n) { var h = ''; for (var i = 0; i < n; i += 4) h += ((a[i] ? 8 : 0) | (a[i + 1] ? 4 : 0) | (a[i + 2] ? 2 : 0) | (a[i + 3] ? 1 : 0)).toString(16); return h.replace(/0+$/, ''); }
   function hexBits(h, n) { var a = new Array(n).fill(false); for (var i = 0; i < h.length && i * 4 < n; i++) { var d = parseInt(h[i], 16) || 0; for (var j = 0; j < 4; j++) if (i * 4 + j < n) a[i * 4 + j] = !!(d & (8 >> j)); } return a; }
   function packSong() {
-    return JSON.stringify({ v: 1, tt: C.title || '', b: C.bpm, n: C.bars, l: C.loop ? 1 : 0, k: state.root, m: state.scale, t: C.tracks.map(function (tr) {
+    return JSON.stringify({ v: 1, tt: C.title || '', b: C.bpm, n: C.bars, l: C.loop ? 1 : 0, k: state.root, m: state.scale, t: C.tracks.filter(function (tr) { return tr.kind !== 'voice'; }).map(function (tr) {
       var o = { k: tr.kind === 'perc' ? 0 : 1, i: tr.inst, v: tr.vol, o: tr.octave || 0, c: tr.clips.map(function (c) {
         return [c.start, c.len, tr.kind === 'perc' ? KITS[tr.inst].strokes.map(function (id) { return bitsHex(c.steps[id] || [], c.len * 16); })
           : [].concat.apply([], c.notes.map(function (n) { return [n.s, n.r, n.l]; }))];
@@ -2131,6 +2177,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     note.textContent = '';
     songLink().then(function (url) {
       box.hidden = false; inp.value = url;
+      if (C.tracks.some(function (t) { return t.kind === 'voice'; })) $('cExportNote').textContent = 'Voice recordings are too big for a link, so the link has everything except them. To share your voice too, use Download audio.';
       if (navigator.share && matchMedia('(pointer: coarse)').matches) { // phones: open the share sheet (WhatsApp, Messages ...)
         navigator.share({ title: C.title || 'My song', text: 'Listen to my song, made with Bendir & Raï', url: url }).catch(function () {});
         return;
@@ -2175,19 +2222,21 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   function cSched() {
     var sd = 60 / C.bpm / 4, total = C.bars * 16, anySolo = C.tracks.some(function (t) { return t.solo; });
     while (cBase < ctx.currentTime + 0.12) {
+      if (cStep >= total && mic) setTimeout(function () { if (cRec) cRecSet(false); }, Math.max(0, (cBase - ctx.currentTime) * 1000)); // a voice take ends with the song
       if (cStep >= total) { if (C.loop) cStep = 0; else { cEndAt = cBase; clearInterval(cTimer); cTimer = null; return; } }
-      cStepAt(cStep, cBase, sd, anySolo);
+      cStepAt(cStep, cBase, sd, anySolo, cFirst); cFirst = false;
       if (state.cClick && cStep % 4 === 0) cClickAt(cBase, cStep % 16 === 0);
       cQ.push({ step: cStep, time: cBase, sd: sd });
       cStep++; cBase += sd;
     }
   }
-  function cStepAt(step, t, sd, anySolo) {
+  function cStepAt(step, t, sd, anySolo, first) {
     var bar = Math.floor(step / 16), st = step % 16, vel = st % 4 === 0 ? 1 : 0.8;
     C.tracks.forEach(function (tr) {
       if (tr.mute || (anySolo && !tr.solo)) return;
       var clip = clipAt(tr, bar); if (!clip) return;
       var ls = (bar - clip.start) * 16 + st;
+      if (tr.kind === 'voice') { if (ls === 0 || first) playVoice(tr, clip, t, ls, sd); return; } // a recording starts at its clip, or wherever playing starts
       if (tr.kind === 'perc') {
         drumDest = ensureOut(tr.id); rollLen = sd;
         KITS[tr.inst].strokes.forEach(function (id) { if (clip.steps[id] && clip.steps[id][ls]) hit(id, t, vel); });
@@ -2203,7 +2252,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     if (playing) stop();
     Promise.race([loadSounds(), new Promise(function (r) { setTimeout(r, 1500); })]).then(function () {
       if (cPlaying) return;
-      cPlaying = true; cStep = Math.min(cStart, C.bars - 1) * 16; cBase = ctx.currentTime + 0.06; cQ = []; cEndAt = 0; cLast = null;
+      cPlaying = true; cFirst = true; cStep = Math.min(cStart, C.bars - 1) * 16; cBase = ctx.currentTime + 0.06; cQ = []; cEndAt = 0; cLast = null;
       cMix(); cSched(); cTimer = setInterval(cSched, 25);
       $('cPlay').textContent = '■ Stop'; $('cPlay').classList.add('playing');
     });
@@ -2215,6 +2264,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   }
   function cStop() {
     if (cRec) cRecSet(false);
+    voiceSrcs.forEach(function (v) { try { v.stop(); } catch (e) {} }); voiceSrcs = [];
     cPlaying = false; clearInterval(cTimer); cTimer = null; cQ = [];
     $('cPlay').textContent = '▶ Play'; $('cPlay').classList.remove('playing');
     cPlayhead(cStart * 16);
@@ -2234,7 +2284,17 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var ns = 'http://www.w3.org/2000/svg', svg = document.createElementNS(ns, 'svg'), cols = clip.len * 16, rows;
     svg.setAttribute('preserveAspectRatio', 'none'); svg.setAttribute('aria-hidden', 'true');
     var rect = function (x, y, w, h) { var r = document.createElementNS(ns, 'rect'); r.setAttribute('x', x); r.setAttribute('y', y); r.setAttribute('width', w); r.setAttribute('height', h); r.setAttribute('fill', 'currentColor'); svg.appendChild(r); };
-    if (tr.kind === 'perc') {
+    if (tr.kind === 'voice') { // the waveform of the recording
+      rows = 2; var b = voiceBufs[clip.audio], sd = 60 / C.bpm / 4;
+      if (b) {
+        var d = b.getChannelData(0), n = cols * 2, peak = 0.0001, vals = [];
+        for (var q = 0; q < n; q++) {
+          var t0 = (clip.off || 0) + (clip.nudge || 0) + q / n * cols * sd, i0 = Math.max(0, Math.floor(t0 * b.sampleRate)), i1 = Math.min(d.length, Math.floor((t0 + cols * sd / n) * b.sampleRate)), m = 0;
+          for (var j = i0; j < i1; j += 16) m = Math.max(m, Math.abs(d[j])); vals.push(m); peak = Math.max(peak, m);
+        }
+        vals.forEach(function (m, q) { var h = Math.max(0.03, m / peak); rect(q / 2, 1 - h, 0.5, 2 * h); });
+      }
+    } else if (tr.kind === 'perc') {
       var ids = KITS[tr.inst].strokes; rows = ids.length;
       ids.forEach(function (id, ri) { (clip.steps[id] || []).forEach(function (on, i) { if (on && i < cols) rect(i + 0.15, ri + 0.15, 0.7, 0.7); }); });
     } else {
@@ -2244,9 +2304,10 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     svg.setAttribute('viewBox', '0 0 ' + cols + ' ' + rows);
     return svg;
   }
-  function trackName(tr) { return tr.kind === 'perc' ? KITS[tr.inst].name : tr.inst; }
+  function trackName(tr) { return tr.kind === 'perc' ? KITS[tr.inst].name : tr.kind === 'voice' ? 'Voice' : tr.inst; }
   function clipEl(tr, clip) {
     var e = el('div', 'clip ' + tr.kind + (cSel && cSel.c === clip.id ? ' sel' : ''));
+    if (tr.kind === 'voice' && !voiceBufs[clip.audio]) loadVoice(clip.audio).then(function (b) { if (b) refreshClip(tr, clip); });
     e.dataset.c = clip.id; e.style.left = 'calc(var(--bw) * ' + clip.start + ')'; e.style.width = 'calc(var(--bw) * ' + clip.len + ' - 2px)';
     e.appendChild(el('span', 'cname', trackName(tr))); e.appendChild(clipSVG(tr, clip)); e.appendChild(el('span', 'grip'));
     e.setAttribute('role', 'button'); e.setAttribute('aria-label', trackName(tr) + ' clip, bars ' + (clip.start + 1) + ' to ' + (clip.start + clip.len));
@@ -2353,11 +2414,11 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       btn('Octave −', function () { tr.octave = Math.max(1, tr.octave - 1); compTS(tr); cEditor(); save(); });
       btn('Octave +', function () { tr.octave = Math.min(6, tr.octave + 1); compTS(tr); cEditor(); save(); });
     }
-    btn('Clear', function () { if (tr.kind === 'perc') KITS[tr.inst].strokes.forEach(function (id) { clip.steps[id] = new Array(clip.len * 16).fill(false); }); else clip.notes = []; refreshClip(tr, clip); cEditor(); save(); });
+    if (tr.kind !== 'voice') btn('Clear', function () { if (tr.kind === 'perc') KITS[tr.inst].strokes.forEach(function (id) { clip.steps[id] = new Array(clip.len * 16).fill(false); }); else clip.notes = []; refreshClip(tr, clip); cEditor(); save(); });
     btn('Delete clip', function () { tr.clips = tr.clips.filter(function (k) { return k !== clip; }); cSel = null; cRender(); save(); });
     box.appendChild(head);
     box.style.setProperty('--accent', tr.kind === 'perc' ? 'var(--drum)' : 'var(--synth)');
-    if (tr.kind === 'perc') percEditor(box, tr, clip); else rollEditor(box, tr, clip);
+    if (tr.kind === 'perc') percEditor(box, tr, clip); else if (tr.kind === 'voice') voiceEditor(box, tr, clip); else rollEditor(box, tr, clip);
   }
   function percEditor(box, tr, clip) {
     var kit = KITS[tr.inst], cols = clip.len * 16;
@@ -2448,6 +2509,11 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     document.body.classList.toggle('play-perc', !!t && t.kind === 'perc');
     document.body.classList.toggle('play-mel', !!t && t.kind === 'mel');
     if (!on) return;
+    if (t && t.kind === 'voice') {
+      $('cPlayTitle').textContent = cRec ? 'Recording your voice' : 'Record your voice';
+      $('cPlayHint').textContent = 'Press ● Record: the song plays from the start marker (▼ above bar ' + (cStart + 1) + ') and the microphone records until you press Record again or the song ends. Use headphones, so the music is not recorded too. Recordings stay in this browser' + (audioKept ? '' : ' until you close the page') + '.';
+      return;
+    }
     if (!t) {
       $('cPlayTitle').textContent = 'Play an instrument';
       $('cPlayHint').textContent = 'Pick a track (click its name or one of its clips) to play it here. Turn on Record while the song plays to write what you play into that track.';
@@ -2496,6 +2562,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   }
   function cRecSet(on) {
     cRec = on;
+    if (!on && mic) micStop();
     if (!on) { Object.keys(recOpen).forEach(cRecNoteOff); histPause(false); }
     else histPause(true); // a whole take is one step in the undo history
     $('cRec').classList.toggle('sel', on); $('cRec').setAttribute('aria-pressed', on); $('cRec').textContent = on ? '● Recording' : '● Record';
@@ -2504,9 +2571,110 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   $('cRec').addEventListener('click', function () {
     if (cRec) { cRecSet(false); return; }
     if (!cKeysSel) { var first = C.tracks[0]; if (first) cKeysSel = first.id; markSel(); }
+    var vt = cTrack(cKeysSel);
+    if (vt && vt.kind === 'voice') { // the microphone first, so the take starts with the music
+      var b = this; b.disabled = true;
+      micStart().then(function () { cRecSet(true); if (cPlaying) { cStop(); } cPlay(); }, cMicError).then(function () { b.disabled = false; });
+      return;
+    }
     cRecSet(true); if (!cPlaying) cPlay();
   });
   $('cClick').addEventListener('click', function () { state.cClick = !state.cClick; this.classList.toggle('sel', state.cClick); this.setAttribute('aria-pressed', state.cClick); save(); });
+
+  // ---------- voice recordings ----------
+  var voiceBufs = {}, voiceSrcs = [], mic = null, recModuleP = null, cFirst = false;
+  function pcmToBuffer(v) {
+    var i16 = new Int16Array(v.pcm), b = new AudioBuffer({ length: Math.max(1, i16.length), sampleRate: v.sr, numberOfChannels: 1 }), d = b.getChannelData(0);
+    for (var i = 0; i < i16.length; i++) d[i] = i16[i] / 32768;
+    return b;
+  }
+  function loadVoice(key) {
+    if (voiceBufs[key]) return Promise.resolve(voiceBufs[key]);
+    return audioGet(key).then(function (v) { if (v && v.pcm) voiceBufs[key] = pcmToBuffer(v); return voiceBufs[key]; });
+  }
+  function playVoice(tr, clip, t, ls, sd) {
+    var b = voiceBufs[clip.audio]; if (!b) return;
+    var from = (clip.off || 0) + (clip.nudge || 0) + ls * sd, dur = (clip.len * 16 - ls) * sd, delay = 0;
+    if (from < 0) { delay = -from; from = 0; dur -= delay; }
+    if (from >= b.duration || dur <= 0.01) return;
+    var src = ctx.createBufferSource(), g = ctx.createGain(), end = t + delay + Math.min(dur, b.duration - from);
+    src.buffer = b;
+    g.gain.setValueAtTime(0, t + delay); g.gain.linearRampToValueAtTime(1, t + delay + 0.006);
+    g.gain.setValueAtTime(1, Math.max(t + delay + 0.007, end - 0.012)); g.gain.linearRampToValueAtTime(0, end);
+    src.connect(g); g.connect(ensureOut(tr.id)); src.start(t + delay, from); src.stop(end + 0.02);
+    if (!(ctx instanceof OfflineAudioContext)) voiceSrcs.push(src);
+  }
+  function cPosAt(T) { var sd = 60 / C.bpm / 4; return cStep - (cBase - T) / sd; }
+  // The microphone is read sample by sample (an audio worklet), so every piece knows exactly when it was heard.
+  var REC_CODE = "class R extends AudioWorkletProcessor{constructor(){super();this.b=new Float32Array(4096);this.n=0;this.t=0}" +
+    "process(i){var c=i[0]&&i[0][0];if(!c)return true;if(this.n===0)this.t=currentTime;var m=Math.min(c.length,4096-this.n);this.b.set(c.subarray(0,m),this.n);this.n+=m;" +
+    "if(this.n===4096){this.port.postMessage({d:this.b.slice(0),t:this.t});this.n=0}return true}}registerProcessor('bendir-rec',R);";
+  function recNode(onChunk) {
+    if (ctx.audioWorklet && window.AudioWorkletNode) {
+      if (!recModuleP) recModuleP = ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([REC_CODE], { type: 'application/javascript' })));
+      return recModuleP.then(function () { var n = new AudioWorkletNode(ctx, 'bendir-rec'); n.port.onmessage = function (e) { onChunk(e.data.d, e.data.t); }; return n; });
+    }
+    var sp = ctx.createScriptProcessor(4096, 1, 1); // older browsers
+    sp.onaudioprocess = function (e) { onChunk(new Float32Array(e.inputBuffer.getChannelData(0)), ctx.currentTime - 4096 / ctx.sampleRate); };
+    return Promise.resolve(sp);
+  }
+  function micStart() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return Promise.reject(new Error('nomic'));
+    ensureAudio();
+    return navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }).then(function (stream) {
+      var src = ctx.createMediaStreamSource(stream), sink = ctx.createGain(), set = stream.getAudioTracks()[0].getSettings ? stream.getAudioTracks()[0].getSettings() : {};
+      sink.gain.value = 0; sink.connect(ctx.destination);
+      var m = { stream: stream, src: src, sink: sink, chunks: [], firstT: null, firstPos: 0, inLat: set.latency || 0.01 };
+      return recNode(function (data, t) {
+        if (!cPlaying || !cRec || mic !== m) return;
+        if (m.firstT == null) { m.firstT = t; m.firstPos = cPosAt(t); }
+        m.chunks.push(data);
+      }).then(function (node) { src.connect(node); node.connect(sink); m.node = node; mic = m; });
+    });
+  }
+  function micStop() {
+    var m = mic; mic = null; if (!m) return;
+    try { m.stream.getTracks().forEach(function (t) { t.stop(); }); m.src.disconnect(); m.node.disconnect(); m.sink.disconnect(); } catch (e) {}
+    var tr = cTrack(cKeysSel); if (!tr || tr.kind !== 'voice' || !m.chunks.length) return;
+    var sd = 60 / C.bpm / 4, sr = ctx.sampleRate, total = m.chunks.reduce(function (a, c) { return a + c.length; }, 0);
+    var data = new Float32Array(total), o = 0; m.chunks.forEach(function (c) { data.set(c, o); o += c.length; });
+    // The singer hears the music late (output delay) and the microphone hears them late (input delay): move the take earlier by both.
+    var lat = (ctx.outputLatency || ctx.baseLatency || 0) + m.inLat, startPos = m.firstPos - lat / sd;
+    var bar = Math.max(0, Math.floor(startPos / 16)), lead = (startPos - bar * 16) * sd;
+    var len = Math.max(1, Math.min(C.bars - bar, Math.ceil((lead + total / sr) / (16 * sd))));
+    var key = 'voice-' + Date.now().toString(36), i16 = new Int16Array(total);
+    for (var i = 0; i < total; i++) i16[i] = Math.max(-32768, Math.min(32767, Math.round(data[i] * 32767)));
+    var buf = new AudioBuffer({ length: total, sampleRate: sr, numberOfChannels: 1 }); buf.getChannelData(0).set(data); voiceBufs[key] = buf;
+    tr.clips = tr.clips.filter(function (k) { return k.start + k.len <= bar || k.start >= bar + len; }); // a new take replaces what it covers
+    var clip = { id: cNew('c'), start: bar, len: len, audio: key, off: -lead };
+    tr.clips.push(clip); cSel = { t: tr.id, c: clip.id };
+    audioPut(key, { sr: sr, pcm: i16.buffer }).then(function () { save(); });
+    cRender(); save();
+  }
+  function cMicError(e) {
+    var h = $('cPlayHint');
+    h.textContent = e && e.name === 'NotAllowedError' ? 'The microphone is blocked. Allow it for this site in your browser (usually the icon at the left of the address bar), then press ● Record again.'
+      : e && e.name === 'NotFoundError' ? 'No microphone was found. Connect one, then press ● Record again.'
+      : 'The microphone cannot be used here. Open the app on its own site (nadhemkhlij.github.io) in Chrome, Firefox or Safari.';
+  }
+  function voiceEditor(box, tr, clip) {
+    var sd = 60 / C.bpm / 4, b = voiceBufs[clip.audio];
+    var wave = el('div', 'voice-wave'); wave.appendChild(clipSVG(tr, clip)); box.appendChild(wave);
+    if (!b) { box.appendChild(el('p', 'hint', 'This recording is not stored in this browser, so it cannot play here. Recordings stay on the device they were made on.')); return; }
+    var row = el('div', 'knobs');
+    var ec = el('div', 'ctl'), el1 = el('label', '', 'Echo'), ei = el('input'); el1.setAttribute('for', 'cVoiceEcho'); ei.id = 'cVoiceEcho'; ei.type = 'range'; ei.min = 0; ei.max = 100; ei.value = tr.echo || 0;
+    ei.addEventListener('input', function () { tr.echo = +ei.value; if (trackSend[tr.id]) trackSend[tr.id].gain.setTargetAtTime(tr.echo / 100 * 0.7, ctx.currentTime, 0.02); save(); });
+    ec.appendChild(el1); ec.appendChild(ei); row.appendChild(ec);
+    var nd = el('div', 'ctl'), shift = el('span', 'lbl'), chips = el('div', 'chips');
+    var showShift = function () { var ms = Math.round((clip.nudge || 0) * 1000); shift.textContent = 'Timing: ' + (ms > 0 ? ms + ' ms earlier' : ms < 0 ? -ms + ' ms later' : 'as recorded'); };
+    [['◀ 10 ms earlier', 0.01], ['10 ms later ▶', -0.01]].forEach(function (a) {
+      var x = el('button', 'chip', a[0]); x.type = 'button';
+      x.addEventListener('click', function () { clip.nudge = Math.round(((clip.nudge || 0) + a[1]) * 1000) / 1000; showShift(); refreshClip(tr, clip); save(); });
+      chips.appendChild(x);
+    });
+    showShift(); nd.appendChild(shift); nd.appendChild(chips); row.appendChild(nd); box.appendChild(row);
+    box.appendChild(el('p', 'hint', 'A take of ' + b.duration.toFixed(1) + ' seconds. If your voice sounds a little behind or ahead of the beat, move it 10 ms at a time. Drag the clip to move it by bars, or record again over it to replace it.'));
+  }
 
   // ---------- undo and redo ----------
   // Changes made within half a second of each other (a drag, a paint stroke) are one step.
@@ -2562,11 +2730,13 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     var add = $('cAdd'), o = el('option', '', 'Choose…'); o.value = ''; add.appendChild(o);
     var g1 = el('optgroup'); g1.label = 'Percussion'; Object.keys(KITS).forEach(function (k) { var x = el('option', '', KITS[k].name); x.value = 'perc:' + k; g1.appendChild(x); }); add.appendChild(g1);
     var g2 = el('optgroup'); g2.label = 'Melody'; Object.keys(SOUNDS).forEach(function (k) { var x = el('option', '', k); x.value = 'mel:' + k; g2.appendChild(x); }); add.appendChild(g2);
+    var g3 = el('optgroup'); g3.label = 'Voice'; var xv = el('option', '', 'Voice (record with a microphone)'); xv.value = 'voice:Voice'; g3.appendChild(xv); add.appendChild(g3);
     add.addEventListener('change', function () {
       var v = add.value; add.value = ''; if (!v) return;
       if (C.tracks.length >= 12) return;
       var kind = v.split(':')[0], inst = v.slice(kind.length + 1);
-      var t = { id: cNew('t'), kind: kind, inst: inst, vol: 75, mute: false, solo: false, octave: kind === 'mel' ? SOUNDS[inst].octave : 0, clips: [] };
+      var t = { id: cNew('t'), kind: kind, inst: inst, vol: kind === 'voice' ? 85 : 75, mute: false, solo: false, octave: kind === 'mel' ? SOUNDS[inst].octave : 0, clips: [] };
+      if (kind === 'voice') { t.echo = 15; cKeysSel = t.id; }
       C.tracks.push(t); loadSounds(); cRender(); save();
       $('tlWrap').scrollIntoView({ block: 'nearest' });
     });
@@ -2992,7 +3162,40 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     $('gbTune').value = k.tune; $('gbTuneOut').textContent = (k.tune > 0 ? '+' : '') + k.tune;
     $('gbDecay').value = Math.round(k.decay * 100); $('gbDecayOut').textContent = Math.round(k.decay * 100);
     $('gbLevel').value = state.levels[id];
+    var smp = state.gb.kit[id].sample;
+    $('gbSampleName').textContent = smp ? 'Plays your sound: ' + smp.name : 'Plays the built-in ' + GB_NAMES[id].toLowerCase() + '.';
+    $('gbBuiltIn').hidden = !smp;
   }
+  function decodeBytes(bytes) { return new OfflineAudioContext(1, 1, 44100).decodeAudioData(bytes.slice(0)); }
+  function loadUserSample(id) {
+    var k = state.gb.kit[id];
+    if (!k.sample) { delete userBufs[id]; return Promise.resolve(); }
+    return audioGet(k.sample.key).then(function (v) {
+      if (!v) { delete k.sample; delete userBufs[id]; return; } // not on this device any more
+      return decodeBytes(v.bytes).then(function (b) { userBufs[id] = b; });
+    }).catch(function () {});
+  }
+  function loadSoundFile(id, file) {
+    var note = $('gbSampleNote');
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) { note.textContent = 'That file is over 8 MB. Use a short sound: a single hit of a few seconds at most.'; return; }
+    note.textContent = 'Loading ' + file.name + '…';
+    file.arrayBuffer().then(function (bytes) {
+      return decodeBytes(bytes).then(function (buf) {
+        var k = state.gb.kit[id], old = k.sample && k.sample.key, key = 'smp-' + id + '-' + Date.now().toString(36);
+        if (buf.duration > 10) throw new Error('long');
+        return audioPut(key, { name: file.name, bytes: bytes }).then(function (kept) {
+          k.sample = { key: key, name: file.name.slice(0, 60) }; userBufs[id] = buf; if (old) audioDel(old);
+          save(); gbVoiceUI(); gbMarkPads();
+          note.textContent = GB_NAMES[id] + ' now plays ' + file.name + '.' + (kept ? '' : ' This browser cannot keep it after you close the page.');
+          ensureAudio(); tap(id);
+        });
+      });
+    }).catch(function (e) {
+      note.textContent = e && e.message === 'long' ? 'That sound is longer than 10 seconds. Use a single hit or a short sample.' : 'That file could not be read as audio. Try a WAV, MP3 or OGG file.';
+    });
+  }
+  function gbMarkPads() { GB_VOICES.forEach(function (id) { var p = gbPadEls[id]; if (!p) return; var own = !!state.gb.kit[id].sample; p.classList.toggle('own', own); p.title = own ? GB_NAMES[id] + ': ' + state.gb.kit[id].sample.name + ' (your sound). Drop a file here to replace it.' : GB_NAMES[id] + '. Drop an audio file here to use your own sound.'; }); }
   var GB_SLIDERS = { gbCut: 'cut', gbRes: 'res', gbEnv: 'env', gbDec: 'dec', gbAcc: 'acc', gbDrive: 'drive', gbVol: 'vol' };
   function gbRender() {
     var g = state.gb;
@@ -3105,6 +3308,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     readLink(code).then(unpackBeat).then(function (r) {
       if (!state.gbBackup) state.gbBackup = { gb: state.gb, levels: GB_VOICES.reduce(function (a, id) { a[id] = state.levels[id]; return a; }, {}) };
       state.gb = r.gb; Object.keys(r.levels).forEach(function (id) { state.levels[id] = r.levels[id]; }); save();
+      GB_VOICES.forEach(function (id) { loadUserSample(id); }); gbMarkPads();
       $('gbShared').hidden = false; $('gbKeepShared').hidden = false; $('gbBackMine').hidden = false;
       $('gbSharedNote').textContent = 'This is a beat someone shared with you. Press Play to hear it. Your own beat is kept safe.';
     }).catch(function () {
@@ -3163,6 +3367,20 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
     $('gbTune').addEventListener('input', function () { var id = $('gbVoice').value; state.gb.kit[id].tune = +this.value; gbVoiceUI(); save(); });
     $('gbDecay').addEventListener('input', function () { var id = $('gbVoice').value; state.gb.kit[id].decay = +this.value / 100; gbVoiceUI(); save(); });
     $('gbLevel').addEventListener('input', function () { state.levels[$('gbVoice').value] = +this.value; save(); });
+    $('gbLoadBtn').addEventListener('click', function () { $('gbFile').click(); });
+    $('gbFile').addEventListener('change', function () { loadSoundFile($('gbVoice').value, this.files[0]); this.value = ''; });
+    $('gbBuiltIn').addEventListener('click', function () {
+      var id = $('gbVoice').value, k = state.gb.kit[id]; if (!k.sample) return;
+      audioDel(k.sample.key); delete k.sample; delete userBufs[id]; save(); gbVoiceUI(); gbMarkPads(); $('gbSampleNote').textContent = GB_NAMES[id] + ' plays its built-in sound again.';
+    });
+    GB_VOICES.forEach(function (id) { // drop an audio file onto a pad to use it
+      var p = gbPadEls[id];
+      p.addEventListener('dragover', function (e) { e.preventDefault(); p.classList.add('drop'); });
+      p.addEventListener('dragleave', function () { p.classList.remove('drop'); });
+      p.addEventListener('drop', function (e) { e.preventDefault(); p.classList.remove('drop'); var f = e.dataTransfer.files[0]; if (f) { $('gbVoice').value = id; loadSoundFile(id, f); } });
+    });
+    GB_VOICES.forEach(function (id) { loadUserSample(id); });
+    gbMarkPads();
     ['gbTune', 'gbDecay'].forEach(function (k) { $(k).addEventListener('change', function () { if (!gbPlaying) tap($('gbVoice').value); }); });
     $('gbFilt').addEventListener('input', function () { var v = +this.value; state.gb.fx.filter = v; $('gbFiltOut').textContent = filtLabel(v); if (!(gbFiltRec && gbPlaying)) applyGb(); else filterAt(v, ctx.currentTime, 0.02); save(); });
     $('gbFiltReset').addEventListener('click', function () { state.gb.fx.filter = 0; $('gbFilt').value = 0; $('gbFiltOut').textContent = 'off'; applyGb(); save(); });
@@ -3190,6 +3408,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
       if (gbPlaying) gbStop();
       state.gb = b.gb; Object.keys(b.levels || {}).forEach(function (id) { state.levels[id] = b.levels[id]; }); delete state.gbBackup;
       $('gbShared').hidden = true; save(); gbRender();
+      GB_VOICES.forEach(function (id) { loadUserSample(id); }); gbMarkPads();
     });
     $('gbEcho').addEventListener('input', function () { state.gb.fx.echo = +this.value; applyGb(); save(); });
     $('gbVerb').addEventListener('input', function () { state.gb.fx.verb = +this.value; applyGb(); save(); });
@@ -3271,6 +3490,7 @@ details > .inner { display: flex; flex-direction: column; gap: 12px; padding-top
   if (!SIMS[state.perc]) state.perc = 'darbuka';
   renderSim();
   route();
+  setTimeout(audioTidy, 4000);
 
   // ---------- playhead, pad flashes, scope ----------
   var scope = $('scope'), g2 = scope.getContext('2d'), wave = new Uint8Array(1024), tick = 0, stroke = '#888';
